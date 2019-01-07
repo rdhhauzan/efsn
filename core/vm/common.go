@@ -80,6 +80,14 @@ func bigUint64(v *big.Int) (uint64, bool) {
 	return v.Uint64(), !v.IsUint64()
 }
 
+func getBigInt(data []byte, start uint64, size uint64) *big.Int {
+	return new(big.Int).SetBytes(getData(data, start, size))
+}
+
+func getUint64(data []byte, start uint64, size uint64) (uint64, bool) {
+	return bigUint64(getBigInt(data, start, size))
+}
+
 // toWordSize returns the ceiled word size required for memory expansion.
 func toWordSize(size uint64) uint64 {
 	if size > math.MaxUint64-31 {
