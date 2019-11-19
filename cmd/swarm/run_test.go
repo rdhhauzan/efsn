@@ -31,7 +31,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/docker/docker/pkg/reexec"
 	"github.com/FusionFoundation/efsn/accounts"
 	"github.com/FusionFoundation/efsn/accounts/keystore"
 	"github.com/FusionFoundation/efsn/internal/cmdtest"
@@ -39,6 +38,7 @@ import (
 	"github.com/FusionFoundation/efsn/p2p"
 	"github.com/FusionFoundation/efsn/rpc"
 	"github.com/FusionFoundation/efsn/swarm"
+	"github.com/docker/docker/pkg/reexec"
 )
 
 func init() {

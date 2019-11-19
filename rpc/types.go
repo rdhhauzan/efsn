@@ -23,8 +23,8 @@ import (
 	"strings"
 	"sync"
 
-	mapset "github.com/deckarep/golang-set"
 	"github.com/FusionFoundation/efsn/common/hexutil"
+	mapset "github.com/deckarep/golang-set"
 )
 
 // API describes the set of methods offered over the RPC interface

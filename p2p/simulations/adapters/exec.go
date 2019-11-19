@@ -34,12 +34,12 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/docker/docker/pkg/reexec"
 	"github.com/FusionFoundation/efsn/log"
 	"github.com/FusionFoundation/efsn/node"
 	"github.com/FusionFoundation/efsn/p2p"
 	"github.com/FusionFoundation/efsn/p2p/discover"
 	"github.com/FusionFoundation/efsn/rpc"
+	"github.com/docker/docker/pkg/reexec"
 	"golang.org/x/net/websocket"
 )
 

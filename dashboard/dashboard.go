@@ -34,12 +34,12 @@ import (
 
 	"io"
 
-	"github.com/elastic/gosigar"
 	"github.com/FusionFoundation/efsn/log"
 	"github.com/FusionFoundation/efsn/metrics"
 	"github.com/FusionFoundation/efsn/p2p"
 	"github.com/FusionFoundation/efsn/params"
 	"github.com/FusionFoundation/efsn/rpc"
+	"github.com/elastic/gosigar"
 	"github.com/mohae/deepcopy"
 	"golang.org/x/net/websocket"
 )

@@ -108,7 +108,7 @@ func NewType(t string) (typ Type, err error) {
 		return Type{}, fmt.Errorf("invalid type '%v'", t)
 	}
 	parsedType := matches[0]
-	
+
 	// varSize is the size of the variable
 	var varSize int
 	if len(parsedType[3]) > 0 {

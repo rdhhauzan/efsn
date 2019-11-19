@@ -34,11 +34,11 @@ import (
 
 	"github.com/FusionFoundation/efsn/crypto"
 	"github.com/FusionFoundation/efsn/crypto/ecies"
-	"github.com/FusionFoundation/efsn/crypto/sha3"
 	"github.com/FusionFoundation/efsn/log"
 	"github.com/FusionFoundation/efsn/swarm/api"
 	swarm "github.com/FusionFoundation/efsn/swarm/api/client"
 	"github.com/FusionFoundation/efsn/swarm/testutil"
+	"golang.org/x/crypto/sha3"
 )
 
 const (
@@ -589,7 +589,7 @@ func TestKeypairSanity(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		hasher := sha3.NewKeccak256()
+		hasher := sha3.NewLegacyKeccak256()
 		hasher.Write(salt)
 		shared, err := hex.DecodeString(sharedSecret)
 		if err != nil {

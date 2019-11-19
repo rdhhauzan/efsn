@@ -27,9 +27,9 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/docker/docker/pkg/reexec"
 	"github.com/FusionFoundation/efsn/node"
 	"github.com/FusionFoundation/efsn/p2p/discover"
+	"github.com/docker/docker/pkg/reexec"
 )
 
 var (

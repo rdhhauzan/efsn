@@ -24,10 +24,10 @@ import (
 
 	"sync"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/FusionFoundation/efsn/common"
 	"github.com/FusionFoundation/efsn/internal/ethapi"
 	"github.com/FusionFoundation/efsn/log"
+	"github.com/davecgh/go-spew/spew"
 	"golang.org/x/crypto/ssh/terminal"
 )
 

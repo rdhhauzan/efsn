@@ -28,9 +28,9 @@ import (
 	"io/ioutil"
 
 	"github.com/FusionFoundation/efsn/common"
-	"github.com/FusionFoundation/efsn/crypto/sha3"
 	"github.com/FusionFoundation/efsn/swarm/bmt"
 	ch "github.com/FusionFoundation/efsn/swarm/chunk"
+	"golang.org/x/crypto/sha3"
 )
 
 const MaxPO = 16
@@ -111,10 +111,10 @@ func MakeHashFunc(hash string) SwarmHasher {
 	case "SHA256":
 		return func() SwarmHash { return &HashWithLength{crypto.SHA256.New()} }
 	case "SHA3":
-		return func() SwarmHash { return &HashWithLength{sha3.NewKeccak256()} }
+		return func() SwarmHash { return &HashWithLength{sha3.NewLegacyKeccak256()} }
 	case "BMT":
 		return func() SwarmHash {
-			hasher := sha3.NewKeccak256
+			hasher := sha3.NewLegacyKeccak256
 			hasherSize := hasher().Size()
 			segmentCount := ch.DefaultSize / hasherSize
 			pool := bmt.NewTreePool(hasher, segmentCount, bmt.PoolSize)

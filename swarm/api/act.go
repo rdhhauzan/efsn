@@ -15,11 +15,11 @@ import (
 	"github.com/FusionFoundation/efsn/common"
 	"github.com/FusionFoundation/efsn/crypto"
 	"github.com/FusionFoundation/efsn/crypto/ecies"
-	"github.com/FusionFoundation/efsn/crypto/sha3"
 	"github.com/FusionFoundation/efsn/swarm/log"
 	"github.com/FusionFoundation/efsn/swarm/sctx"
 	"github.com/FusionFoundation/efsn/swarm/storage"
 	"golang.org/x/crypto/scrypt"
+	"golang.org/x/crypto/sha3"
 	cli "gopkg.in/urfave/cli.v1"
 )
 
@@ -336,7 +336,7 @@ func (a *API) doDecrypt(ctx context.Context, credentials string, pk *ecdsa.Priva
 }
 
 func (a *API) getACTDecryptionKey(ctx context.Context, actManifestAddress storage.Address, sessionKey []byte) (found bool, ciphertext, decryptionKey []byte, err error) {
-	hasher := sha3.NewKeccak256()
+	hasher := sha3.NewLegacyKeccak256()
 	hasher.Write(append(sessionKey, 0))
 	lookupKey := hasher.Sum(nil)
 	hasher.Reset()
@@ -459,7 +459,7 @@ func DoACT(ctx *cli.Context, privateKey *ecdsa.PrivateKey, salt []byte, grantees
 		}
 		sessionKey, err := NewSessionKeyPK(privateKey, granteePub, salt)
 
-		hasher := sha3.NewKeccak256()
+		hasher := sha3.NewLegacyKeccak256()
 		hasher.Write(append(sessionKey, 0))
 		lookupKey := hasher.Sum(nil)
 
@@ -481,7 +481,7 @@ func DoACT(ctx *cli.Context, privateKey *ecdsa.PrivateKey, salt []byte, grantees
 		if err != nil {
 			return nil, nil, nil, err
 		}
-		hasher := sha3.NewKeccak256()
+		hasher := sha3.NewLegacyKeccak256()
 		hasher.Write(append(sessionKey, 0))
 		lookupKey := hasher.Sum(nil)
 

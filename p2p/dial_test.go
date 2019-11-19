@@ -23,9 +23,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/FusionFoundation/efsn/p2p/discover"
 	"github.com/FusionFoundation/efsn/p2p/netutil"
+	"github.com/davecgh/go-spew/spew"
 )
 
 func init() {

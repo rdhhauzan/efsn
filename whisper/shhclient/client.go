@@ -19,7 +19,7 @@ package shhclient
 import (
 	"context"
 
-	"github.com/FusionFoundation/efsn"
+	ethereum "github.com/FusionFoundation/efsn"
 	"github.com/FusionFoundation/efsn/common/hexutil"
 	"github.com/FusionFoundation/efsn/rpc"
 	whisper "github.com/FusionFoundation/efsn/whisper/whisperv6"

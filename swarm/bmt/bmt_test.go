@@ -28,7 +28,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/FusionFoundation/efsn/crypto/sha3"
+	"golang.org/x/crypto/sha3"
 )
 
 // the actual data length generated (could be longer than max datalength of the BMT)
@@ -45,7 +45,7 @@ var counts = []int{1, 2, 3, 4, 5, 8, 9, 15, 16, 17, 32, 37, 42, 53, 63, 64, 65, 
 
 // calculates the Keccak256 SHA3 hash of the data
 func sha3hash(data ...[]byte) []byte {
-	h := sha3.NewKeccak256()
+	h := sha3.NewLegacyKeccak256()
 	return doSum(h, nil, data...)
 }
 
@@ -125,7 +125,7 @@ func TestRefHasher(t *testing.T) {
 						t.Fatal(err)
 					}
 					expected := x.expected(data)
-					actual := NewRefHasher(sha3.NewKeccak256, segmentCount).Hash(data)
+					actual := NewRefHasher(sha3.NewLegacyKeccak256, segmentCount).Hash(data)
 					if !bytes.Equal(actual, expected) {
 						t.Fatalf("expected %x, got %x", expected, actual)
 					}
@@ -137,7 +137,7 @@ func TestRefHasher(t *testing.T) {
 
 // tests if hasher responds with correct hash comparing the reference implementation return value
 func TestHasherEmptyData(t *testing.T) {
-	hasher := sha3.NewKeccak256
+	hasher := sha3.NewLegacyKeccak256
 	var data []byte
 	for _, count := range counts {
 		t.Run(fmt.Sprintf("%d_segments", count), func(t *testing.T) {
@@ -157,7 +157,7 @@ func TestHasherEmptyData(t *testing.T) {
 // tests sequential write with entire max size written in one go
 func TestSyncHasherCorrectness(t *testing.T) {
 	data := newData(BufferSize)
-	hasher := sha3.NewKeccak256
+	hasher := sha3.NewLegacyKeccak256
 	size := hasher().Size()
 
 	var err error
@@ -183,7 +183,7 @@ func TestSyncHasherCorrectness(t *testing.T) {
 // tests order-neutral concurrent writes with entire max size written in one go
 func TestAsyncCorrectness(t *testing.T) {
 	data := newData(BufferSize)
-	hasher := sha3.NewKeccak256
+	hasher := sha3.NewLegacyKeccak256
 	size := hasher().Size()
 	whs := []whenHash{first, last, random}
 
@@ -230,7 +230,7 @@ func TestHasherReuse(t *testing.T) {
 
 // tests if bmt reuse is not corrupting result
 func testHasherReuse(poolsize int, t *testing.T) {
-	hasher := sha3.NewKeccak256
+	hasher := sha3.NewLegacyKeccak256
 	pool := NewTreePool(hasher, segmentCount, poolsize)
 	defer pool.Drain(0)
 	bmt := New(pool)
@@ -247,7 +247,7 @@ func testHasherReuse(poolsize int, t *testing.T) {
 
 // Tests if pool can be cleanly reused even in concurrent use by several hasher
 func TestBMTConcurrentUse(t *testing.T) {
-	hasher := sha3.NewKeccak256
+	hasher := sha3.NewLegacyKeccak256
 	pool := NewTreePool(hasher, segmentCount, PoolSize)
 	defer pool.Drain(0)
 	cycles := 100
@@ -281,7 +281,7 @@ LOOP:
 // Tests BMT Hasher io.Writer interface is working correctly
 // even multiple short random write buffers
 func TestBMTWriterBuffers(t *testing.T) {
-	hasher := sha3.NewKeccak256
+	hasher := sha3.NewLegacyKeccak256
 
 	for _, count := range counts {
 		t.Run(fmt.Sprintf("%d_segments", count), func(t *testing.T) {
@@ -414,7 +414,7 @@ func BenchmarkPool(t *testing.B) {
 // benchmarks simple sha3 hash on chunks
 func benchmarkSHA3(t *testing.B, n int) {
 	data := newData(n)
-	hasher := sha3.NewKeccak256
+	hasher := sha3.NewLegacyKeccak256
 	h := hasher()
 
 	t.ReportAllocs()
@@ -430,7 +430,7 @@ func benchmarkSHA3(t *testing.B, n int) {
 // the premise is that this is the minimum computation needed for a BMT
 // therefore this serves as a theoretical optimum for concurrent implementations
 func benchmarkBMTBaseline(t *testing.B, n int) {
-	hasher := sha3.NewKeccak256
+	hasher := sha3.NewLegacyKeccak256
 	hashSize := hasher().Size()
 	data := newData(hashSize)
 
@@ -457,7 +457,7 @@ func benchmarkBMTBaseline(t *testing.B, n int) {
 // benchmarks BMT Hasher
 func benchmarkBMT(t *testing.B, n int) {
 	data := newData(n)
-	hasher := sha3.NewKeccak256
+	hasher := sha3.NewLegacyKeccak256
 	pool := NewTreePool(hasher, segmentCount, PoolSize)
 	bmt := New(pool)
 
@@ -471,7 +471,7 @@ func benchmarkBMT(t *testing.B, n int) {
 // benchmarks BMT hasher with asynchronous concurrent segment/section writes
 func benchmarkBMTAsync(t *testing.B, n int, wh whenHash, double bool) {
 	data := newData(n)
-	hasher := sha3.NewKeccak256
+	hasher := sha3.NewLegacyKeccak256
 	pool := NewTreePool(hasher, segmentCount, PoolSize)
 	bmt := New(pool).NewAsyncWriter(double)
 	idxs, segments := splitAndShuffle(bmt.SectionSize(), data)
@@ -489,7 +489,7 @@ func benchmarkBMTAsync(t *testing.B, n int, wh whenHash, double bool) {
 // benchmarks 100 concurrent bmt hashes with pool capacity
 func benchmarkPool(t *testing.B, poolsize, n int) {
 	data := newData(n)
-	hasher := sha3.NewKeccak256
+	hasher := sha3.NewLegacyKeccak256
 	pool := NewTreePool(hasher, segmentCount, poolsize)
 	cycles := 100
 
@@ -512,7 +512,7 @@ func benchmarkPool(t *testing.B, poolsize, n int) {
 // benchmarks the reference hasher
 func benchmarkRefHasher(t *testing.B, n int) {
 	data := newData(n)
-	hasher := sha3.NewKeccak256
+	hasher := sha3.NewLegacyKeccak256
 	rbmt := NewRefHasher(hasher, 128)
 
 	t.ReportAllocs()

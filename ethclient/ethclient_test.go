@@ -16,7 +16,7 @@
 
 package ethclient
 
-import "github.com/FusionFoundation/efsn"
+import ethereum "github.com/FusionFoundation/efsn"
 
 // Verify that Client implements the ethereum interfaces.
 var (
