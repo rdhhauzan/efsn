@@ -1,4 +1,4 @@
-// Copyright 2018 The go-ethereum Authors
+// Copyright 2019 The go-ethereum Authors
 // This file is part of the go-ethereum library.
 //
 // The go-ethereum library is free software: you can redistribute it and/or modify
@@ -14,28 +14,33 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the go-ethereum library. If not, see <http://www.gnu.org/licenses/>.
 
-package rpc
+// Package testlog provides a log handler for unit tests.
+package testlog
 
 import (
 	"testing"
 
-	"github.com/FusionFoundation/efsn/rpc"
-	"github.com/FusionFoundation/efsn/swarm/storage/mock/mem"
-	"github.com/FusionFoundation/efsn/swarm/storage/mock/test"
+	"github.com/FusionFoundation/efsn/log"
 )
 
-// TestDBStore is running test for a GlobalStore
-// using test.MockStore function.
-func TestRPCStore(t *testing.T) {
-	serverStore := mem.NewGlobalStore()
+// Logger returns a logger which logs to the unit test log of t.
+func Logger(t *testing.T, level log.Lvl) log.Logger {
+	l := log.New()
+	l.SetHandler(Handler(t, level))
+	return l
+}
 
-	server := rpc.NewServer()
-	if err := server.RegisterName("mockStore", serverStore); err != nil {
-		t.Fatal(err)
-	}
+// Handler returns a log handler which logs to the unit test log of t.
+func Handler(t *testing.T, level log.Lvl) log.Handler {
+	return log.LvlFilterHandler(level, &handler{t, log.TerminalFormat(false)})
+}
 
-	store := NewGlobalStore(rpc.DialInProc(server))
-	defer store.Close()
+type handler struct {
+	t   *testing.T
+	fmt log.Format
+}
 
-	test.MockStore(t, store, 100)
+func (h *handler) Log(r *log.Record) error {
+	h.t.Logf("%s", h.fmt.Format(r))
+	return nil
 }

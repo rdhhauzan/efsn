@@ -157,7 +157,7 @@ func testPendingStateAndBlock(t *testing.T, chainConfig *params.ChainConfig, eng
 	if block.NumberU64() != 1 {
 		t.Errorf("block number mismatch: have %d, want %d", block.NumberU64(), 1)
 	}
-	if balance := state.GetBalance(testUserAddress); balance.Cmp(big.NewInt(1000)) != 0 {
+	if balance := state.GetBalance(common.SystemAssetID, testUserAddress); balance.Cmp(big.NewInt(1000)) != 0 {
 		t.Errorf("account balance mismatch: have %d, want %d", balance, 1000)
 	}
 	b.txPool.AddLocals(newTxs)
@@ -165,7 +165,7 @@ func testPendingStateAndBlock(t *testing.T, chainConfig *params.ChainConfig, eng
 	// Ensure the new tx events has been processed
 	time.Sleep(100 * time.Millisecond)
 	block, state = w.pending()
-	if balance := state.GetBalance(testUserAddress); balance.Cmp(big.NewInt(2000)) != 0 {
+	if balance := state.GetBalance(common.SystemAssetID, testUserAddress); balance.Cmp(big.NewInt(2000)) != 0 {
 		t.Errorf("account balance mismatch: have %d, want %d", balance, 2000)
 	}
 }
@@ -196,8 +196,8 @@ func testEmptyWork(t *testing.T, chainConfig *params.ChainConfig, engine consens
 		if len(task.receipts) != receiptLen {
 			t.Errorf("receipt number mismatch: have %d, want %d", len(task.receipts), receiptLen)
 		}
-		if task.state.GetBalance(testUserAddress).Cmp(balance) != 0 {
-			t.Errorf("account balance mismatch: have %d, want %d", task.state.GetBalance(testUserAddress), balance)
+		if task.state.GetBalance(common.SystemAssetID, testUserAddress).Cmp(balance) != 0 {
+			t.Errorf("account balance mismatch: have %d, want %d", task.state.GetBalance(common.SystemAssetID, testUserAddress), balance)
 		}
 	}
 
@@ -310,8 +310,8 @@ func testRegenerateMiningBlock(t *testing.T, chainConfig *params.ChainConfig, en
 				if len(task.receipts) != receiptLen {
 					t.Errorf("receipt number mismatch: have %d, want %d", len(task.receipts), receiptLen)
 				}
-				if task.state.GetBalance(testUserAddress).Cmp(balance) != 0 {
-					t.Errorf("account balance mismatch: have %d, want %d", task.state.GetBalance(testUserAddress), balance)
+				if task.state.GetBalance(common.SystemAssetID, testUserAddress).Cmp(balance) != 0 {
+					t.Errorf("account balance mismatch: have %d, want %d", task.state.GetBalance(common.SystemAssetID, testUserAddress), balance)
 				}
 			}
 			taskCh <- struct{}{}

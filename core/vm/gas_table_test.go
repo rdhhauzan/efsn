@@ -23,8 +23,8 @@ import (
 
 	"github.com/FusionFoundation/efsn/common"
 	"github.com/FusionFoundation/efsn/common/hexutil"
-	"github.com/FusionFoundation/efsn/core/rawdb"
 	"github.com/FusionFoundation/efsn/core/state"
+	"github.com/FusionFoundation/efsn/ethdb"
 	"github.com/FusionFoundation/efsn/params"
 )
 
@@ -81,7 +81,7 @@ func TestEIP2200(t *testing.T) {
 	for i, tt := range eip2200Tests {
 		address := common.BytesToAddress([]byte("contract"))
 
-		statedb, _ := state.New(common.Hash{}, state.NewDatabase(rawdb.NewMemoryDatabase()))
+		statedb, _ := state.New(common.Hash{}, common.Hash{}, state.NewDatabase(ethdb.NewMemDatabase()))
 		statedb.CreateAccount(address)
 		statedb.SetCode(address, hexutil.MustDecode(tt.input))
 		statedb.SetState(address, common.Hash{}, common.BytesToHash([]byte{tt.original}))

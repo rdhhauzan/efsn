@@ -23,9 +23,9 @@ import (
 
 	"github.com/FusionFoundation/efsn/accounts/abi"
 	"github.com/FusionFoundation/efsn/common"
-	"github.com/FusionFoundation/efsn/core/rawdb"
 	"github.com/FusionFoundation/efsn/core/state"
 	"github.com/FusionFoundation/efsn/core/vm"
+	"github.com/FusionFoundation/efsn/ethdb"
 	"github.com/FusionFoundation/efsn/params"
 )
 
@@ -95,7 +95,7 @@ func TestExecute(t *testing.T) {
 }
 
 func TestCall(t *testing.T) {
-	state, _ := state.New(common.Hash{}, state.NewDatabase(rawdb.NewMemoryDatabase()))
+	state, _ := state.New(common.Hash{}, common.Hash{}, state.NewDatabase(ethdb.NewMemDatabase()))
 	address := common.HexToAddress("0x0a")
 	state.SetCode(address, []byte{
 		byte(vm.PUSH1), 10,
@@ -151,7 +151,7 @@ func BenchmarkCall(b *testing.B) {
 }
 func benchmarkEVM_Create(bench *testing.B, code string) {
 	var (
-		statedb, _ = state.New(common.Hash{}, state.NewDatabase(rawdb.NewMemoryDatabase()))
+		statedb, _ = state.New(common.Hash{}, common.Hash{}, state.NewDatabase(ethdb.NewMemDatabase()))
 		sender     = common.BytesToAddress([]byte("sender"))
 		receiver   = common.BytesToAddress([]byte("receiver"))
 	)
