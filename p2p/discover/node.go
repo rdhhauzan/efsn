@@ -179,7 +179,7 @@ func parseComplete(rawurl string) (*Node, error) {
 
 	ips, err := net.LookupIP(host)
 	if err != nil || len(ips) < 1 {
-		return nil, errors.New("invalid host")
+		return nil, errors.New("invalid IP address")
 	}
 	ip = ips[0]
 	// Ensure the IP is 4 bytes long for IPv4 addresses.

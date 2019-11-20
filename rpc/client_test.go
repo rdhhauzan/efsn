@@ -30,8 +30,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/FusionFoundation/efsn/log"
+	"github.com/davecgh/go-spew/spew"
 )
 
 func TestClientRequest(t *testing.T) {
@@ -327,60 +327,6 @@ func TestClientCloseUnsubscribeRace(t *testing.T) {
 			t.Fatal("subscription not closed within timeout")
 		}
 	}
-}
-
-// This test checks that Client doesn't lock up when a single subscriber
-// doesn't read subscription events.
-func TestClientNotificationStorm(t *testing.T) {
-	server := newTestServer()
-	defer server.Stop()
-
-	doTest := func(count int, wantError bool) {
-		client := DialInProc(server)
-		defer client.Close()
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
-
-		// Subscribe on the server. It will start sending many notifications
-		// very quickly.
-		nc := make(chan int)
-		sub, err := client.Subscribe(ctx, "nftest", nc, "someSubscription", count, 0)
-		if err != nil {
-			t.Fatal("can't subscribe:", err)
-		}
-		defer sub.Unsubscribe()
-
-		// Process each notification, try to run a call in between each of them.
-		for i := 0; i < count; i++ {
-			select {
-			case val := <-nc:
-				if val != i {
-					t.Fatalf("(%d/%d) unexpected value %d", i, count, val)
-				}
-			case err := <-sub.Err():
-				if wantError && err != ErrSubscriptionQueueOverflow {
-					t.Fatalf("(%d/%d) got error %q, want %q", i, count, err, ErrSubscriptionQueueOverflow)
-				} else if !wantError {
-					t.Fatalf("(%d/%d) got unexpected error %q", i, count, err)
-				}
-				return
-			}
-			var r int
-			err := client.CallContext(ctx, &r, "nftest_echo", i)
-			if err != nil {
-				if !wantError {
-					t.Fatalf("(%d/%d) call error: %v", i, count, err)
-				}
-				return
-			}
-		}
-		if wantError {
-			t.Fatalf("didn't get expected error")
-		}
-	}
-
-	doTest(8000, false)
-	doTest(23000, true)
 }
 
 func TestClientHTTP(t *testing.T) {

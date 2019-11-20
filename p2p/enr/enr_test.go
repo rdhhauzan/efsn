@@ -17,7 +17,6 @@
 package enr
 
 import (
-	"bytes"
 	"encoding/hex"
 	"fmt"
 	"math/rand"
@@ -236,35 +235,6 @@ func TestNodeAddr(t *testing.T) {
 }
 
 var pyRecord, _ = hex.DecodeString("f884b8407098ad865b00a582051940cb9cf36836572411a47278783077011599ed5cd16b76f2635f4e234738f30813a89eb9137e3e3df5266e3a1f11df72ecf1145ccb9c01826964827634826970847f00000189736563703235366b31a103ca634cae0d49acb401d8a4c6b6fe8c55b70d115bf400769cc1400f3258cd31388375647082765f")
-
-// TestPythonInterop checks that we can decode and verify a record produced by the Python
-// implementation.
-func TestPythonInterop(t *testing.T) {
-	var r Record
-	if err := rlp.DecodeBytes(pyRecord, &r); err != nil {
-		t.Fatalf("can't decode: %v", err)
-	}
-
-	var (
-		wantAddr, _ = hex.DecodeString("a448f24c6d18e575453db13171562b71999873db5b286df957af199ec94617f7")
-		wantSeq     = uint64(1)
-		wantIP      = IP{127, 0, 0, 1}
-		wantUDP     = UDP(40408)
-	)
-	if r.Seq() != wantSeq {
-		t.Errorf("wrong seq: got %d, want %d", r.Seq(), wantSeq)
-	}
-	if addr := r.NodeAddr(); !bytes.Equal(addr, wantAddr) {
-		t.Errorf("wrong addr: got %x, want %x", addr, wantAddr)
-	}
-	want := map[Entry]interface{}{new(IP): &wantIP, new(UDP): &wantUDP}
-	for k, v := range want {
-		desc := fmt.Sprintf("loading key %q", k.ENRKey())
-		if assert.NoError(t, r.Load(k), desc) {
-			assert.Equal(t, k, v, desc)
-		}
-	}
-}
 
 // TestRecordTooBig tests that records bigger than SizeLimit bytes cannot be signed.
 func TestRecordTooBig(t *testing.T) {

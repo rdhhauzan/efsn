@@ -112,10 +112,7 @@ func (net *Network) NewNodeWithConfig(conf *adapters.NodeConfig) (*Node, error) 
 	if err != nil {
 		return nil, err
 	}
-	node := &Node{
-		Node:   adapterNode,
-		Config: conf,
-	}
+	node := newNode(adapterNode, conf, false)
 	log.Trace(fmt.Sprintf("node %v created", conf.ID))
 	net.nodeMap[conf.ID] = len(net.Nodes)
 	net.Nodes = append(net.Nodes, node)
@@ -134,7 +131,7 @@ func (net *Network) Config() *NetworkConfig {
 // StartAll starts all nodes in the network
 func (net *Network) StartAll() error {
 	for _, node := range net.Nodes {
-		if node.Up {
+		if node.Up() {
 			continue
 		}
 		if err := net.Start(node.ID()); err != nil {
@@ -147,7 +144,7 @@ func (net *Network) StartAll() error {
 // StopAll stops all nodes in the network
 func (net *Network) StopAll() error {
 	for _, node := range net.Nodes {
-		if !node.Up {
+		if !node.Up() {
 			continue
 		}
 		if err := net.Stop(node.ID()); err != nil {
@@ -171,16 +168,16 @@ func (net *Network) startWithSnapshots(id discover.NodeID, snapshots map[string]
 	if node == nil {
 		return fmt.Errorf("node %v does not exist", id)
 	}
-	if node.Up {
+	if node.Up() {
 		return fmt.Errorf("node %v already up", id)
 	}
-	log.Trace(fmt.Sprintf("starting node %v: %v using %v", id, node.Up, net.nodeAdapter.Name()))
+	log.Trace(fmt.Sprintf("starting node %v: %v using %v", id, node.Up(), net.nodeAdapter.Name()))
 	if err := node.Start(snapshots); err != nil {
 		log.Warn(fmt.Sprintf("start up failed: %v", err))
 		return err
 	}
-	node.Up = true
-	log.Info(fmt.Sprintf("started node %v: %v", id, node.Up))
+	node.SetUp(true)
+	log.Info(fmt.Sprintf("started node %v: %v", id, node.Up()))
 
 	net.events.Send(NewEvent(node))
 
@@ -212,7 +209,7 @@ func (net *Network) watchPeerEvents(id discover.NodeID, events chan *p2p.PeerEve
 			log.Error("Can not find node for id", "id", id)
 			return
 		}
-		node.Up = false
+		node.SetUp(false)
 		net.events.Send(NewEvent(node))
 	}()
 	for {
@@ -255,14 +252,14 @@ func (net *Network) Stop(id discover.NodeID) error {
 	if node == nil {
 		return fmt.Errorf("node %v does not exist", id)
 	}
-	if !node.Up {
+	if !node.Up() {
 		return fmt.Errorf("node %v already down", id)
 	}
 	if err := node.Stop(); err != nil {
 		return err
 	}
-	node.Up = false
-	log.Info(fmt.Sprintf("stop node %v: %v", id, node.Up))
+	node.SetUp(false)
+	log.Info(fmt.Sprintf("stop node %v: %v", id, node.Up()))
 
 	net.events.Send(ControlEvent(node))
 	return nil
@@ -523,7 +520,31 @@ type Node struct {
 	Config *adapters.NodeConfig `json:"config"`
 
 	// Up tracks whether or not the node is running
-	Up bool `json:"up"`
+	up   bool
+	upMu *sync.RWMutex
+}
+
+func newNode(an adapters.Node, ac *adapters.NodeConfig, up bool) *Node {
+	return &Node{Node: an, Config: ac, up: up, upMu: new(sync.RWMutex)}
+}
+
+func (n *Node) copy() *Node {
+	configCpy := *n.Config
+	return newNode(n.Node, &configCpy, n.Up())
+}
+
+// Up returns whether the node is currently up (online)
+func (n *Node) Up() bool {
+	n.upMu.RLock()
+	defer n.upMu.RUnlock()
+	return n.up
+}
+
+// SetUp sets the up (online) status of the nodes with the given value
+func (n *Node) SetUp(up bool) {
+	n.upMu.Lock()
+	defer n.upMu.Unlock()
+	n.up = up
 }
 
 // ID returns the ID of the node
@@ -557,8 +578,24 @@ func (n *Node) MarshalJSON() ([]byte, error) {
 	}{
 		Info:   n.NodeInfo(),
 		Config: n.Config,
-		Up:     n.Up,
+		Up:     n.Up(),
 	})
+}
+
+// UnmarshalJSON implements json.Unmarshaler interface so that we don't lose Node.up
+// status. IMPORTANT: The implementation is incomplete; we lose p2p.NodeInfo.
+func (n *Node) UnmarshalJSON(raw []byte) error {
+	// TODO: How should we turn back NodeInfo into n.Node?
+	// Ticket: https://github.com/ethersphere/go-ethereum/issues/1177
+	var node struct {
+		Config *adapters.NodeConfig `json:"config,omitempty"`
+		Up     bool                 `json:"up"`
+	}
+	if err := json.Unmarshal(raw, &node); err != nil {
+		return err
+	}
+	*n = *newNode(nil, node.Config, node.Up)
+	return nil
 }
 
 // Conn represents a connection between two nodes in the network
@@ -580,10 +617,10 @@ type Conn struct {
 
 // nodesUp returns whether both nodes are currently up
 func (c *Conn) nodesUp() error {
-	if !c.one.Up {
+	if !c.one.Up() {
 		return fmt.Errorf("one %v is not up", c.One)
 	}
-	if !c.other.Up {
+	if !c.other.Up() {
 		return fmt.Errorf("other %v is not up", c.Other)
 	}
 	return nil
@@ -648,7 +685,7 @@ func (net *Network) Snapshot() (*Snapshot, error) {
 	}
 	for i, node := range net.Nodes {
 		snap.Nodes[i] = NodeSnapshot{Node: *node}
-		if !node.Up {
+		if !node.Up() {
 			continue
 		}
 		snapshots, err := node.Snapshots()
@@ -669,7 +706,7 @@ func (net *Network) Load(snap *Snapshot) error {
 		if _, err := net.NewNodeWithConfig(n.Node.Config); err != nil {
 			return err
 		}
-		if !n.Node.Up {
+		if !n.Node.Up() {
 			continue
 		}
 		if err := net.startWithSnapshots(n.Node.Config.ID, n.Snapshots); err != nil {
@@ -678,7 +715,7 @@ func (net *Network) Load(snap *Snapshot) error {
 	}
 	for _, conn := range snap.Conns {
 
-		if !net.GetNode(conn.One).Up || !net.GetNode(conn.Other).Up {
+		if !net.GetNode(conn.One).Up() || !net.GetNode(conn.Other).Up() {
 			//in this case, at least one of the nodes of a connection is not up,
 			//so it would result in the snapshot `Load` to fail
 			continue
@@ -724,7 +761,7 @@ func (net *Network) executeControlEvent(event *Event) {
 }
 
 func (net *Network) executeNodeEvent(e *Event) error {
-	if !e.Node.Up {
+	if !e.Node.Up() {
 		return net.Stop(e.Node.ID())
 	}
 
