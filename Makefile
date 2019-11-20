@@ -28,6 +28,12 @@ debug:
 bootnode:
 	build/env.sh go run build/ci.go install ./cmd/bootnode
 
+rlpdump:
+	build/env.sh go run build/ci.go install ./cmd/rlpdump
+
+ethkey:
+	build/env.sh go run build/ci.go install ./cmd/ethkey
+
 all:
 	build/env.sh go run build/ci.go install
 
