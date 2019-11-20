@@ -45,7 +45,6 @@ import (
 	"github.com/FusionFoundation/efsn/eth/gasprice"
 	"github.com/FusionFoundation/efsn/ethdb"
 	"github.com/FusionFoundation/efsn/ethstats"
-	"github.com/FusionFoundation/efsn/les"
 	"github.com/FusionFoundation/efsn/log"
 	"github.com/FusionFoundation/efsn/metrics"
 	"github.com/FusionFoundation/efsn/metrics/influxdb"
@@ -1168,6 +1167,9 @@ func SetEthConfig(ctx *cli.Context, stack *node.Node, cfg *eth.Config) {
 		if cfg.SyncMode == downloader.FastSync && downloader.FastSyncSupported() == false {
 			log.Warn("SetEthConfig: 'fast' sync mode is not supported, change to 'full' sync mode.")
 			cfg.SyncMode = downloader.FullSync
+		} else if cfg.SyncMode == downloader.LightSync && downloader.LightSyncSupported() == false {
+			log.Warn("SetEthConfig: 'light' sync mode is not supported, change to 'full' sync mode.")
+			cfg.SyncMode = downloader.FullSync
 		}
 	}
 	if ctx.GlobalIsSet(LightServFlag.Name) {
@@ -1313,18 +1315,9 @@ func SetDashboardConfig(ctx *cli.Context, cfg *dashboard.Config) {
 // RegisterEthService adds an Ethereum client to the stack.
 func RegisterEthService(stack *node.Node, cfg *eth.Config) {
 	var err error
-	if cfg.SyncMode == downloader.LightSync {
+	if cfg.SyncMode != downloader.LightSync {
 		err = stack.Register(func(ctx *node.ServiceContext) (node.Service, error) {
-			return les.New(ctx, cfg)
-		})
-	} else {
-		err = stack.Register(func(ctx *node.ServiceContext) (node.Service, error) {
-			fullNode, err := eth.New(ctx, cfg)
-			if fullNode != nil && cfg.LightServ > 0 {
-				ls, _ := les.NewLesServer(fullNode, cfg)
-				fullNode.AddLesServer(ls)
-			}
-			return fullNode, err
+			return eth.New(ctx, cfg)
 		})
 	}
 	if err != nil {
@@ -1352,14 +1345,11 @@ func RegisterShhService(stack *node.Node, cfg *whisper.Config) {
 // the given node.
 func RegisterEthStatsService(stack *node.Node, url string) {
 	if err := stack.Register(func(ctx *node.ServiceContext) (node.Service, error) {
-		// Retrieve both eth and les services
+		// Retrieve eth services
 		var ethServ *eth.Ethereum
 		ctx.Service(&ethServ)
 
-		var lesServ *les.LightEthereum
-		ctx.Service(&lesServ)
-
-		return ethstats.New(url, ethServ, lesServ)
+		return ethstats.New(url, ethServ)
 	}); err != nil {
 		Fatalf("Failed to register the Ethereum Stats service: %v", err)
 	}

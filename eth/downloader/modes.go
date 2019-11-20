@@ -31,6 +31,10 @@ func FastSyncSupported() bool {
 	return false
 }
 
+func LightSyncSupported() bool {
+	return false
+}
+
 func DefaultSyncMode() SyncMode {
 	if FastSyncSupported() {
 		return FastSync
