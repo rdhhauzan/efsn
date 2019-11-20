@@ -40,8 +40,8 @@ import (
 	"github.com/FusionFoundation/efsn/params"
 	"github.com/FusionFoundation/efsn/rpc"
 	"github.com/elastic/gosigar"
+	"github.com/gorilla/websocket"
 	"github.com/mohae/deepcopy"
-	"golang.org/x/net/websocket"
 )
 
 const (
@@ -137,7 +137,7 @@ func (db *Dashboard) Start(server *p2p.Server) error {
 	go db.streamLogs()
 
 	http.HandleFunc("/", db.webHandler)
-	http.Handle("/api", websocket.Handler(db.apiHandler))
+	http.Handle("/api", rpc.WebsocketFuncHandler(db.apiHandler, nil))
 
 	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", db.config.Host, db.config.Port))
 	if err != nil {
@@ -224,7 +224,7 @@ func (db *Dashboard) apiHandler(conn *websocket.Conn) {
 			case <-done:
 				return
 			case msg := <-client.msg:
-				if err := websocket.JSON.Send(client.conn, msg); err != nil {
+				if err := client.conn.WriteJSON(msg); err != nil {
 					client.logger.Warn("Failed to send the message", "msg", msg, "err", err)
 					client.conn.Close()
 					return
@@ -246,7 +246,7 @@ func (db *Dashboard) apiHandler(conn *websocket.Conn) {
 	}()
 	for {
 		r := new(Request)
-		if err := websocket.JSON.Receive(conn, r); err != nil {
+		if err := conn.ReadJSON(r); err != nil {
 			if err != io.EOF {
 				client.logger.Warn("Failed to receive request", "err", err)
 			}
