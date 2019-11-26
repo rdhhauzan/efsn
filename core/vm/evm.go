@@ -40,16 +40,27 @@ type (
 	GetHashFunc func(uint64) common.Hash
 )
 
+func getPrecompiledContracts(evm *EVM, codeAddr *common.Address, caller common.Address) PrecompiledContract {
+	if codeAddr == nil {
+		return nil
+	}
+	precompiles := PrecompiledContractsHomestead
+	if evm.chainRules.IsConstantinople {
+		if *codeAddr == TimeLockContractAddress {
+			return NewTimeLockContract(evm, caller)
+		}
+		precompiles = PrecompiledContractsIstanbul
+	} else if evm.chainRules.IsByzantium {
+		precompiles = PrecompiledContractsByzantium
+	}
+	return precompiles[*codeAddr]
+}
+
 // run runs the given contract and takes care of running precompiles with a fallback to the byte code interpreter.
 func run(evm *EVM, contract *Contract, input []byte, readOnly bool) ([]byte, error) {
-	if contract.CodeAddr != nil {
-		precompiles := PrecompiledContractsHomestead
-		if evm.chainRules.IsByzantium {
-			precompiles = PrecompiledContractsByzantium
-		}
-		if p := precompiles[*contract.CodeAddr]; p != nil {
-			return RunPrecompiledContract(p, input, contract)
-		}
+	p := getPrecompiledContracts(evm, contract.CodeAddr, contract.Caller())
+	if p != nil {
+		return RunPrecompiledContract(p, input, contract)
 	}
 	for _, interpreter := range evm.interpreters {
 		if interpreter.CanRun(contract.Code) {
@@ -204,11 +215,8 @@ func (evm *EVM) Call(caller ContractRef, addr common.Address, input []byte, gas 
 		snapshot = evm.StateDB.Snapshot()
 	)
 	if !evm.StateDB.Exist(addr) {
-		precompiles := PrecompiledContractsHomestead
-		if evm.chainRules.IsByzantium {
-			precompiles = PrecompiledContractsByzantium
-		}
-		if precompiles[addr] == nil && evm.chainRules.IsEIP158 && value.Sign() == 0 {
+		p := getPrecompiledContracts(evm, &addr, caller.Address())
+		if p == nil && evm.chainRules.IsEIP158 && value.Sign() == 0 {
 			// Calling a non existing account, don't do anything, but ping the tracer
 			if evm.vmConfig.Debug && evm.depth == 0 {
 				evm.vmConfig.Tracer.CaptureStart(caller.Address(), addr, false, input, gas, value)

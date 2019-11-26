@@ -94,6 +94,9 @@ type StateDB interface {
 
 	IsReportExist(report []byte) bool
 	AddReport(report []byte) error
+
+	GetStructData(addr common.Address, key []byte) []byte
+	SetStructData(addr common.Address, key, value []byte)
 }
 
 // CallContext provides a basic interface for the EVM calling conventions. The EVM EVM

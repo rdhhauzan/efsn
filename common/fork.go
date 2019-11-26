@@ -61,3 +61,7 @@ func IsHeaderSnapCheckingEnabled(blockNumber *big.Int) bool {
 func IsMultipleMiningCheckingEnabled(blockNumber *big.Int) bool {
 	return IsHardFork(1, blockNumber)
 }
+
+func IsTimeLockContractEnabled(blockNumber *big.Int) bool {
+	return IsHardFork(2, blockNumber)
+}
