@@ -10,14 +10,8 @@ RUN cd /efsn && make efsn
 FROM alpine:latest
 
 RUN apk add --no-cache ca-certificates
-# RUN apk add --no-cache jq
 COPY --from=builder /efsn/build/bin/efsn /usr/local/bin/
+COPY ./docker-entrypoint-custom.sh /usr/local/bin
 
-EXPOSE 9000 9000/udp 9001 9001/udp 40407 40407/udp 40408 40408/udp
-
-COPY ./docker-entrypoint-gtw.sh /usr/local/bin
-
-RUN chmod a+x /usr/local/bin/docker-entrypoint-gtw.sh \
-  && ln -s /usr/local/bin/docker-entrypoint-gtw.sh / # Needed for backwards compatability
-
-ENTRYPOINT ["docker-entrypoint-gtw.sh"]
+EXPOSE 9000 9001 40408 40408/udp
+ENTRYPOINT ["/bin/sh", "/usr/local/bin/docker-entrypoint-custom.sh"]
