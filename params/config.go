@@ -25,9 +25,8 @@ import (
 
 // Genesis hashes to enforce below configs on.
 var (
-	MainnetGenesisHash = common.HexToHash("0xabce10521451bd9945a776816b40f49ddb3cef755e4f10c58dc5bc60bfdb911e")
-	TestnetGenesisHash = common.HexToHash("0x41941023680923e0fe4d74a34bdac8141f2540e3ae90623718e47d66d1ca4a2d")
-	RinkebyGenesisHash = common.HexToHash("0x6341fd3daf94b748c72ced5a5b26028f2474f5f00d824504e4fa37a75767e177")
+	MainnetGenesisHash = common.HexToHash("0xc2422b1d9d16331be2a5b207c0783027d4419498003f729f4b9e9c5c1838623a")
+	TestnetGenesisHash = common.HexToHash("0xbc679bca6ecc3cc41c4d5d3455d72d23991b2770d2f3144043a25e7cb5503f46")
 )
 
 var (
@@ -48,15 +47,6 @@ var (
 		},
 	}
 
-	// MainnetTrustedCheckpoint contains the light client trusted checkpoint for the main network.
-	MainnetTrustedCheckpoint = &TrustedCheckpoint{
-		Name:         "mainnet",
-		SectionIndex: 193,
-		SectionHead:  common.HexToHash("0xc2d574295ecedc4d58530ae24c31a5a98be7d2b3327fba0dd0f4ed3913828a55"),
-		CHTRoot:      common.HexToHash("0x5d1027dfae688c77376e842679ceada87fd94738feb9b32ef165473bfbbb317b"),
-		BloomRoot:    common.HexToHash("0xd38be1a06aabd568e10957fee4fcc523bc64996bcf31bae3f55f86e0a583919f"),
-	}
-
 	// TestnetChainConfig contains the chain parameters to run a node on the fusion test network.
 	TestnetChainConfig = &ChainConfig{
 		ChainID:             big.NewInt(46688),
@@ -72,42 +62,6 @@ var (
 		DaTong: &DaTongConfig{
 			Period: 15,
 		},
-	}
-
-	// TestnetTrustedCheckpoint contains the light client trusted checkpoint for the Ropsten test network.
-	TestnetTrustedCheckpoint = &TrustedCheckpoint{
-		Name:         "testnet",
-		SectionIndex: 123,
-		SectionHead:  common.HexToHash("0xa372a53decb68ce453da12bea1c8ee7b568b276aa2aab94d9060aa7c81fc3dee"),
-		CHTRoot:      common.HexToHash("0x6b02e7fada79cd2a80d4b3623df9c44384d6647fc127462e1c188ccd09ece87b"),
-		BloomRoot:    common.HexToHash("0xf2d27490914968279d6377d42868928632573e823b5d1d4a944cba6009e16259"),
-	}
-
-	// RinkebyChainConfig contains the chain parameters to run a node on the Rinkeby test network.
-	RinkebyChainConfig = &ChainConfig{
-		ChainID:             big.NewInt(4),
-		HomesteadBlock:      big.NewInt(1),
-		DAOForkBlock:        nil,
-		DAOForkSupport:      true,
-		EIP150Block:         big.NewInt(2),
-		EIP150Hash:          common.HexToHash("0x9b095b36c15eaf13044373aef8ee0bd3a382a5abb92e402afa44b8249c3a90e9"),
-		EIP155Block:         big.NewInt(3),
-		EIP158Block:         big.NewInt(3),
-		ByzantiumBlock:      big.NewInt(1035301),
-		ConstantinopleBlock: nil,
-		Clique: &CliqueConfig{
-			Period: 15,
-			Epoch:  30000,
-		},
-	}
-
-	// RinkebyTrustedCheckpoint contains the light client trusted checkpoint for the Rinkeby test network.
-	RinkebyTrustedCheckpoint = &TrustedCheckpoint{
-		Name:         "rinkeby",
-		SectionIndex: 91,
-		SectionHead:  common.HexToHash("0x435b7b2d8a7922f3b9a522f2fb02730e95e0e1782f0f5443894d5415bba37154"),
-		CHTRoot:      common.HexToHash("0x0664bf7ecccfb6775c4eca6f0f264fb5282a22754a2135a1ac4bff2ef02898dd"),
-		BloomRoot:    common.HexToHash("0x2a64df2400c3a2cb6400639bb6ed29389abdb4d93e2e525aa7c21f38767cd96f"),
 	}
 
 	// DevnetChainConfig is the chain parameters to run a node on the develop network.
@@ -127,35 +81,8 @@ var (
 		},
 	}
 
-	// AllEthashProtocolChanges contains every protocol change (EIPs) introduced
-	// and accepted by the Ethereum core developers into the Ethash consensus.
-	//
-	// This configuration is intentionally not using keyed fields to force anyone
-	// adding flags to the config to also have to set these fields.
-	AllEthashProtocolChanges = &ChainConfig{big.NewInt(1337), big.NewInt(0), nil, false, big.NewInt(0), common.Hash{}, big.NewInt(0), big.NewInt(0), big.NewInt(0), nil, nil, new(EthashConfig), nil, nil}
-
-	// AllCliqueProtocolChanges contains every protocol change (EIPs) introduced
-	// and accepted by the Ethereum core developers into the Clique consensus.
-	//
-	// This configuration is intentionally not using keyed fields to force anyone
-	// adding flags to the config to also have to set these fields.
-	AllCliqueProtocolChanges = &ChainConfig{big.NewInt(1337), big.NewInt(0), nil, false, big.NewInt(0), common.Hash{}, big.NewInt(0), big.NewInt(0), big.NewInt(0), nil, nil, nil, &CliqueConfig{Period: 0, Epoch: 30000}, nil}
-
-	TestChainConfig = &ChainConfig{big.NewInt(1), big.NewInt(0), nil, false, big.NewInt(0), common.Hash{}, big.NewInt(0), big.NewInt(0), big.NewInt(0), nil, nil, new(EthashConfig), nil, nil}
-	TestRules       = TestChainConfig.Rules(new(big.Int))
+	TestChainConfig = DevnetChainConfig
 )
-
-// TrustedCheckpoint represents a set of post-processed trie roots (CHT and
-// BloomTrie) associated with the appropriate section index and head hash. It is
-// used to start light syncing from this checkpoint and avoid downloading the
-// entire header chain while still being able to securely access old headers/logs.
-type TrustedCheckpoint struct {
-	Name         string      `json:"-"`
-	SectionIndex uint64      `json:"sectionIndex"`
-	SectionHead  common.Hash `json:"sectionHead"`
-	CHTRoot      common.Hash `json:"chtRoot"`
-	BloomRoot    common.Hash `json:"bloomRoot"`
-}
 
 // ChainConfig is the core config which determines the blockchain settings.
 //
@@ -182,38 +109,13 @@ type ChainConfig struct {
 	EWASMBlock          *big.Int `json:"ewasmBlock,omitempty"`          // EWASM switch block (nil = no fork, 0 = already activated)
 
 	// Various consensus engines
-	Ethash *EthashConfig `json:"ethash,omitempty"`
-	Clique *CliqueConfig `json:"clique,omitempty"`
 	DaTong *DaTongConfig `json:"datong,omitempty"`
-}
-
-// EthashConfig is the consensus engine configs for proof-of-work based sealing.
-type EthashConfig struct{}
-
-// String implements the stringer interface, returning the consensus engine details.
-func (c *EthashConfig) String() string {
-	return "ethash"
-}
-
-// CliqueConfig is the consensus engine configs for proof-of-authority based sealing.
-type CliqueConfig struct {
-	Period uint64 `json:"period"` // Number of seconds between blocks to enforce
-	Epoch  uint64 `json:"epoch"`  // Epoch length to reset votes and checkpoint
-}
-
-// String implements the stringer interface, returning the consensus engine details.
-func (c *CliqueConfig) String() string {
-	return "clique"
 }
 
 // String implements the fmt.Stringer interface.
 func (c *ChainConfig) String() string {
 	var engine interface{}
 	switch {
-	case c.Ethash != nil:
-		engine = c.Ethash
-	case c.Clique != nil:
-		engine = c.Clique
 	case c.DaTong != nil:
 		engine = c.DaTong
 	default:

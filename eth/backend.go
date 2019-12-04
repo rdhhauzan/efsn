@@ -29,9 +29,7 @@ import (
 	"github.com/FusionFoundation/efsn/common"
 	"github.com/FusionFoundation/efsn/common/hexutil"
 	"github.com/FusionFoundation/efsn/consensus"
-	"github.com/FusionFoundation/efsn/consensus/clique"
 	"github.com/FusionFoundation/efsn/consensus/datong"
-	"github.com/FusionFoundation/efsn/consensus/ethash"
 	"github.com/FusionFoundation/efsn/core"
 	"github.com/FusionFoundation/efsn/core/bloombits"
 	"github.com/FusionFoundation/efsn/core/rawdb"
@@ -131,7 +129,7 @@ func New(ctx *node.ServiceContext, config *Config) (*Ethereum, error) {
 		chainConfig:    chainConfig,
 		eventMux:       ctx.EventMux,
 		accountManager: ctx.AccountManager,
-		engine:         CreateConsensusEngine(ctx, chainConfig, &config.Ethash, config.MinerNotify, config.MinerNoverify, chainDb),
+		engine:         CreateConsensusEngine(chainConfig, chainDb),
 		shutdownChan:   make(chan bool),
 		networkID:      config.NetworkId,
 		gasPrice:       config.MinerGasPrice,
@@ -221,39 +219,8 @@ func CreateDB(ctx *node.ServiceContext, config *Config, name string) (ethdb.Data
 }
 
 // CreateConsensusEngine creates the required type of consensus engine instance for an Ethereum service
-func CreateConsensusEngine(ctx *node.ServiceContext, chainConfig *params.ChainConfig, config *ethash.Config, notify []string, noverify bool, db ethdb.Database) consensus.Engine {
-	// If proof-of-authority is requested, set it up
-	if chainConfig.Clique != nil {
-		return clique.New(chainConfig.Clique, db)
-	}
-
-	if chainConfig.DaTong != nil {
-		return datong.New(chainConfig.DaTong, db)
-	}
-
-	// Otherwise assume proof-of-work
-	switch config.PowMode {
-	case ethash.ModeFake:
-		log.Warn("Ethash used in fake mode")
-		return ethash.NewFaker()
-	case ethash.ModeTest:
-		log.Warn("Ethash used in test mode")
-		return ethash.NewTester(nil, noverify)
-	case ethash.ModeShared:
-		log.Warn("Ethash used in shared mode")
-		return ethash.NewShared()
-	default:
-		engine := ethash.New(ethash.Config{
-			CacheDir:       ctx.ResolvePath(config.CacheDir),
-			CachesInMem:    config.CachesInMem,
-			CachesOnDisk:   config.CachesOnDisk,
-			DatasetDir:     config.DatasetDir,
-			DatasetsInMem:  config.DatasetsInMem,
-			DatasetsOnDisk: config.DatasetsOnDisk,
-		}, notify, noverify)
-		engine.SetThreads(-1) // Disable CPU mining
-		return engine
-	}
+func CreateConsensusEngine(chainConfig *params.ChainConfig, db ethdb.Database) consensus.Engine {
+	return datong.New(chainConfig.DaTong, db)
 }
 
 // APIs return the collection of RPC services the ethereum package offers.
@@ -372,9 +339,6 @@ func (s *Ethereum) isLocalBlock(block *types.Block) bool {
 // during the chain reorg depending on whether the author of block
 // is a local account.
 func (s *Ethereum) shouldPreserve(block *types.Block) bool {
-	// The reason we need to disable the self-reorg preserving for clique
-	// is it can be probable to introduce a deadlock.
-	//
 	// e.g. If there are 7 available signers
 	//
 	// r1   A
@@ -388,9 +352,6 @@ func (s *Ethereum) shouldPreserve(block *types.Block) bool {
 	// is A, F and G sign the block of round5 and reject the block of opponents
 	// and in the round6, the last available signer B is offline, the whole
 	// network is stuck.
-	if _, ok := s.engine.(*clique.Clique); ok {
-		return false
-	}
 	return s.isLocalBlock(block)
 }
 
@@ -432,15 +393,6 @@ func (s *Ethereum) StartMining(threads int) error {
 			log.Error("Cannot start mining without etherbase", "err", err)
 			return fmt.Errorf("etherbase missing: %v", err)
 		}
-		if clique, ok := s.engine.(*clique.Clique); ok {
-			wallet, err := s.accountManager.Find(accounts.Account{Address: eb})
-			if wallet == nil || err != nil {
-				log.Error("Etherbase account unavailable locally", "err", err)
-				return fmt.Errorf("signer missing: %v", err)
-			}
-			clique.Authorize(eb, wallet.SignHash)
-		}
-
 		if datong, ok := s.engine.(*datong.DaTong); ok {
 			wallet, err := s.accountManager.Find(accounts.Account{Address: eb})
 			if wallet == nil || err != nil {

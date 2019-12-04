@@ -20,13 +20,10 @@ import (
 	"math/big"
 	"os"
 	"os/user"
-	"path/filepath"
-	"runtime"
 	"time"
 
 	"github.com/FusionFoundation/efsn/common"
 	"github.com/FusionFoundation/efsn/common/hexutil"
-	"github.com/FusionFoundation/efsn/consensus/ethash"
 	"github.com/FusionFoundation/efsn/core"
 	"github.com/FusionFoundation/efsn/eth/downloader"
 	"github.com/FusionFoundation/efsn/eth/gasprice"
@@ -35,14 +32,7 @@ import (
 
 // DefaultConfig contains default settings for use on the Ethereum main net.
 var DefaultConfig = Config{
-	SyncMode: downloader.DefaultSyncMode(),
-	Ethash: ethash.Config{
-		CacheDir:       "ethash",
-		CachesInMem:    2,
-		CachesOnDisk:   3,
-		DatasetsInMem:  1,
-		DatasetsOnDisk: 2,
-	},
+	SyncMode:      downloader.DefaultSyncMode(),
 	NetworkId:     32659,
 	LightPeers:    100,
 	DatabaseCache: 768,
@@ -66,11 +56,6 @@ func init() {
 		if user, err := user.Current(); err == nil {
 			home = user.HomeDir
 		}
-	}
-	if runtime.GOOS == "windows" {
-		DefaultConfig.Ethash.DatasetDir = filepath.Join(home, "AppData", "Ethash")
-	} else {
-		DefaultConfig.Ethash.DatasetDir = filepath.Join(home, ".ethash")
 	}
 }
 
@@ -106,9 +91,6 @@ type Config struct {
 	MinerGasPrice  *big.Int
 	MinerRecommit  time.Duration
 	MinerNoverify  bool
-
-	// Ethash options
-	Ethash ethash.Config
 
 	// Transaction pool options
 	TxPool core.TxPoolConfig
