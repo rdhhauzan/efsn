@@ -1,9 +1,14 @@
-**/.git
+.github
 .git
 !.git/HEAD
 !.git/refs/heads
+
 **/*_test.go
+**/*.swp
 
 build/_workspace
 build/_bin
 tests/testdata
+
+QuickNodeSetup
+cscope.*
