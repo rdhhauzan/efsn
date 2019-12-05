@@ -50,13 +50,6 @@ import (
 	"github.com/FusionFoundation/efsn/rpc"
 )
 
-type LesServer interface {
-	Start(srvr *p2p.Server)
-	Stop()
-	Protocols() []p2p.Protocol
-	SetBloomBitsIndexer(bbIndexer *core.ChainIndexer)
-}
-
 // Ethereum implements the Ethereum full node service.
 type Ethereum struct {
 	config      *Config
@@ -69,7 +62,6 @@ type Ethereum struct {
 	txPool          *core.TxPool
 	blockchain      *core.BlockChain
 	protocolManager *ProtocolManager
-	lesServer       LesServer
 
 	// DB interfaces
 	chainDb ethdb.Database // Block chain database
@@ -91,11 +83,6 @@ type Ethereum struct {
 	netRPCService *ethapi.PublicNetAPI
 
 	lock sync.RWMutex // Protects the variadic fields (e.g. gas price and etherbase)
-}
-
-func (s *Ethereum) AddLesServer(ls LesServer) {
-	s.lesServer = ls
-	ls.SetBloomBitsIndexer(s.bloomIndexer)
 }
 
 // New creates a new Ethereum object (including the
@@ -442,10 +429,7 @@ func (s *Ethereum) Downloader() *downloader.Downloader { return s.protocolManage
 // Protocols implements node.Service, returning all the currently configured
 // network protocols to start.
 func (s *Ethereum) Protocols() []p2p.Protocol {
-	if s.lesServer == nil {
-		return s.protocolManager.SubProtocols
-	}
-	return append(s.protocolManager.SubProtocols, s.lesServer.Protocols()...)
+	return s.protocolManager.SubProtocols
 }
 
 // Start implements node.Service, starting all internal goroutines needed by the
@@ -459,17 +443,8 @@ func (s *Ethereum) Start(srvr *p2p.Server) error {
 
 	// Figure out a max peers count based on the server limits
 	maxPeers := srvr.MaxPeers
-	if s.config.LightServ > 0 {
-		if s.config.LightPeers >= srvr.MaxPeers {
-			return fmt.Errorf("invalid peer config: light peer count (%d) >= total peer count (%d)", s.config.LightPeers, srvr.MaxPeers)
-		}
-		maxPeers -= s.config.LightPeers
-	}
 	// Start the networking layer and the light server if requested
 	s.protocolManager.Start(maxPeers)
-	if s.lesServer != nil {
-		s.lesServer.Start(srvr)
-	}
 	return nil
 }
 
@@ -480,9 +455,6 @@ func (s *Ethereum) Stop() error {
 	s.blockchain.Stop()
 	s.engine.Close()
 	s.protocolManager.Stop()
-	if s.lesServer != nil {
-		s.lesServer.Stop()
-	}
 	s.txPool.Stop()
 	s.miner.Stop()
 	s.eventMux.Stop()
