@@ -96,10 +96,15 @@ It has these top-level messages:
 */
 package trezor
 
-import proto "github.com/golang/protobuf/proto"
-import fmt "fmt"
-import math "math"
-import google_protobuf "github.com/golang/protobuf/protoc-gen-go/descriptor"
+import (
+	fmt "fmt"
+
+	proto "github.com/golang/protobuf/proto"
+
+	math "math"
+
+	google_protobuf "github.com/golang/protobuf/protoc-gen-go/descriptor"
+)
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal

@@ -2,7 +2,7 @@
 # with Go source code. If you know what GOPATH is then you probably
 # don't need to bother with make.
 
-.PHONY: all test lint clean devtools
+.PHONY: all test lint clean devtools fmt
 .PHONY: efsn debug bootnode
 
 GOBIN = $(shell pwd)/build/bin
@@ -59,3 +59,6 @@ devtools:
 	@type "npm" 2> /dev/null || echo 'Please install node.js and npm'
 	@type "solc" 2> /dev/null || echo 'Please install solc'
 	@type "protoc" 2> /dev/null || echo 'Please install protoc'
+
+fmt:
+	./build/goimports.sh

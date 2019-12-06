@@ -1,10 +1,10 @@
 package overflow
 
 import (
+	"fmt"
 	"math"
 	"testing"
 )
-import "fmt"
 
 // sample all possibilities of 8 bit numbers
 // by checking against 64 bit numbers
