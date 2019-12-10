@@ -1152,7 +1152,7 @@ func (s *PrivateFusionAPI) TimeLockToAsset(ctx context.Context, args common.Time
 
 /** on our public gateways too many buyTickets are past through
 this cache of purchase on block will stop multiple purchase
-attempt on a block (which state_transistion also flags).
+attempt on a block (which state_transition also flags).
 the goals is to limit the number of buytickets being processed
 if it is know that they will fail anyway
 */
@@ -1322,14 +1322,11 @@ func AutoBuyTicket(enable bool) {
 
 // report illegal
 func ReportIllegal() {
-	for {
-		select {
-		case content := <-common.ReportIllegalChan:
-			coinbase, err := fusionTransactionAPI.b.Coinbase()
-			if err == nil {
-				args := common.FusionBaseArgs{From: coinbase}
-				fusionTransactionAPI.ReportIllegal(context.TODO(), args, content)
-			}
+	for content := range common.ReportIllegalChan {
+		coinbase, err := fusionTransactionAPI.b.Coinbase()
+		if err == nil {
+			args := common.FusionBaseArgs{From: coinbase}
+			fusionTransactionAPI.ReportIllegal(context.TODO(), args, content)
 		}
 	}
 }

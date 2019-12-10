@@ -598,7 +598,7 @@ func (st *StateTransition) handleFsnCall(param *common.FSNCallParam) error {
 			start := makeSwapParam.FromStartTime
 			end := makeSwapParam.FromEndTime
 			useAsset = start == common.TimeLockNow && end == common.TimeLockForever
-			if useAsset == false {
+			if !useAsset {
 				needValue = common.NewTimeLock(&common.TimeLockItem{
 					StartTime: common.MaxUint64(start, timestamp),
 					EndTime:   end,
@@ -634,7 +634,7 @@ func (st *StateTransition) handleFsnCall(param *common.FSNCallParam) error {
 				return err
 			}
 		} else {
-			if useAsset == true {
+			if useAsset {
 				if st.state.GetBalance(makeSwapParam.FromAssetID, st.msg.From()).Cmp(total) < 0 {
 					st.addLog(common.MakeSwapFunc, makeSwapParam, common.NewKeyValue("Error", "not enough from asset"))
 					return fmt.Errorf("not enough from asset")
@@ -673,7 +673,7 @@ func (st *StateTransition) handleFsnCall(param *common.FSNCallParam) error {
 			}
 
 			// take from the owner the asset
-			if useAsset == true {
+			if useAsset {
 				st.state.SubBalance(st.msg.From(), makeSwapParam.FromAssetID, total)
 			} else {
 				st.state.SubTimeLockBalance(st.msg.From(), makeSwapParam.FromAssetID, needValue, height, timestamp)
@@ -714,7 +714,7 @@ func (st *StateTransition) handleFsnCall(param *common.FSNCallParam) error {
 			useAsset := start == common.TimeLockNow && end == common.TimeLockForever
 
 			// return to the owner the balance
-			if useAsset == true {
+			if useAsset {
 				st.state.AddBalance(st.msg.From(), swap.FromAssetID, total)
 			} else {
 				needValue := common.NewTimeLock(&common.TimeLockItem{
@@ -778,14 +778,14 @@ func (st *StateTransition) handleFsnCall(param *common.FSNCallParam) error {
 		var fromNeedValue *common.TimeLock
 		var toNeedValue *common.TimeLock
 
-		if fromUseAsset == false {
+		if !fromUseAsset {
 			fromNeedValue = common.NewTimeLock(&common.TimeLockItem{
 				StartTime: common.MaxUint64(fromStart, timestamp),
 				EndTime:   fromEnd,
 				Value:     fromTotal,
 			})
 		}
-		if toUseAsset == false {
+		if !toUseAsset {
 			toNeedValue = common.NewTimeLock(&common.TimeLockItem{
 				StartTime: common.MaxUint64(toStart, timestamp),
 				EndTime:   toEnd,
@@ -793,7 +793,7 @@ func (st *StateTransition) handleFsnCall(param *common.FSNCallParam) error {
 			})
 		}
 
-		if toUseAsset == true {
+		if toUseAsset {
 			if st.state.GetBalance(swap.ToAssetID, st.msg.From()).Cmp(toTotal) < 0 {
 				st.addLog(common.TakeSwapFunc, takeSwapParam, common.NewKeyValue("Error", "not enough from asset"))
 				return fmt.Errorf("not enough from asset")
@@ -846,7 +846,7 @@ func (st *StateTransition) handleFsnCall(param *common.FSNCallParam) error {
 			}
 		}
 
-		if toUseAsset == true {
+		if toUseAsset {
 			st.state.AddBalance(swap.Owner, swap.ToAssetID, toTotal)
 			st.state.SubBalance(st.msg.From(), swap.ToAssetID, toTotal)
 		} else {
@@ -864,7 +864,7 @@ func (st *StateTransition) handleFsnCall(param *common.FSNCallParam) error {
 				return err
 			}
 		} else {
-			if fromUseAsset == true {
+			if fromUseAsset {
 				st.state.AddBalance(st.msg.From(), swap.FromAssetID, fromTotal)
 				// the owner of the swap already had their balance taken away
 				// in MakeSwapFunc
@@ -916,7 +916,7 @@ func (st *StateTransition) handleFsnCall(param *common.FSNCallParam) error {
 			useAsset := start == common.TimeLockNow && end == common.TimeLockForever
 
 			// return to the owner the balance
-			if useAsset == true {
+			if useAsset {
 				st.state.AddBalance(st.msg.From(), swap.FromAssetID[i], total)
 			} else {
 				needValue := common.NewTimeLock(&common.TimeLockItem{
@@ -979,7 +979,7 @@ func (st *StateTransition) handleFsnCall(param *common.FSNCallParam) error {
 			start := makeSwapParam.FromStartTime[i]
 			end := makeSwapParam.FromEndTime[i]
 			useAsset[i] = start == common.TimeLockNow && end == common.TimeLockForever
-			if useAsset[i] == false {
+			if !useAsset[i] {
 				needValue[i] = common.NewTimeLock(&common.TimeLockItem{
 					StartTime: common.MaxUint64(start, timestamp),
 					EndTime:   end,
@@ -1014,7 +1014,7 @@ func (st *StateTransition) handleFsnCall(param *common.FSNCallParam) error {
 		for i := 0; i < ln; i++ {
 			balance := accountBalances[makeSwapParam.FromAssetID[i]]
 			timeLockBalance := accountTimeLockBalances[makeSwapParam.FromAssetID[i]]
-			if useAsset[i] == true {
+			if useAsset[i] {
 				if balance.Cmp(total[i]) < 0 {
 					err = fmt.Errorf("not enough from asset")
 					st.addLog(common.MakeMultiSwapFunc, makeSwapParam, common.NewKeyValue("Error", err.Error()))
@@ -1044,7 +1044,7 @@ func (st *StateTransition) handleFsnCall(param *common.FSNCallParam) error {
 		// then deduct
 		var deductErr error
 		for i := 0; i < ln; i++ {
-			if useAsset[i] == true {
+			if useAsset[i] {
 				if st.state.GetBalance(makeSwapParam.FromAssetID[i], st.msg.From()).Cmp(total[i]) < 0 {
 					deductErr = fmt.Errorf("not enough from asset")
 					break
@@ -1071,7 +1071,7 @@ func (st *StateTransition) handleFsnCall(param *common.FSNCallParam) error {
 			}
 
 			// take from the owner the asset
-			if useAsset[i] == true {
+			if useAsset[i] {
 				st.state.SubBalance(st.msg.From(), makeSwapParam.FromAssetID[i], total[i])
 			} else {
 				st.state.SubTimeLockBalance(st.msg.From(), makeSwapParam.FromAssetID[i], needValue[i], height, timestamp)
@@ -1127,7 +1127,7 @@ func (st *StateTransition) handleFsnCall(param *common.FSNCallParam) error {
 			fromEnd[i] = swap.FromEndTime[i]
 			fromUseAsset[i] = fromStart[i] == common.TimeLockNow && fromEnd[i] == common.TimeLockForever
 
-			if fromUseAsset[i] == false {
+			if !fromUseAsset[i] {
 				fromNeedValue[i] = common.NewTimeLock(&common.TimeLockItem{
 					StartTime: common.MaxUint64(fromStart[i], timestamp),
 					EndTime:   fromEnd[i],
@@ -1159,7 +1159,7 @@ func (st *StateTransition) handleFsnCall(param *common.FSNCallParam) error {
 			toStart[i] = swap.ToStartTime[i]
 			toEnd[i] = swap.ToEndTime[i]
 			toUseAsset[i] = toStart[i] == common.TimeLockNow && toEnd[i] == common.TimeLockForever
-			if toUseAsset[i] == false {
+			if !toUseAsset[i] {
 				toNeedValue[i] = common.NewTimeLock(&common.TimeLockItem{
 					StartTime: common.MaxUint64(toStart[i], timestamp),
 					EndTime:   toEnd[i],
@@ -1172,7 +1172,7 @@ func (st *StateTransition) handleFsnCall(param *common.FSNCallParam) error {
 		for i := 0; i < lnTo; i++ {
 			balance := accountBalances[swap.ToAssetID[i]]
 			timeLockBalance := accountTimeLockBalances[swap.ToAssetID[i]]
-			if toUseAsset[i] == true {
+			if toUseAsset[i] {
 				if balance.Cmp(toTotal[i]) < 0 {
 					err = fmt.Errorf("not enough from asset")
 					st.addLog(common.TakeMultiSwapFunc, takeSwapParam, common.NewKeyValue("Error", err.Error()))
@@ -1205,7 +1205,7 @@ func (st *StateTransition) handleFsnCall(param *common.FSNCallParam) error {
 		// then deduct
 		var deductErr error
 		for i := 0; i < lnTo; i++ {
-			if toUseAsset[i] == true {
+			if toUseAsset[i] {
 				if st.state.GetBalance(swap.ToAssetID[i], st.msg.From()).Cmp(toTotal[i]) < 0 {
 					deductErr = fmt.Errorf("not enough from asset")
 					break
@@ -1261,7 +1261,7 @@ func (st *StateTransition) handleFsnCall(param *common.FSNCallParam) error {
 
 		// credit the swap owner with to assets
 		for i := 0; i < lnTo; i++ {
-			if toUseAsset[i] == true {
+			if toUseAsset[i] {
 				st.state.AddBalance(swap.Owner, swap.ToAssetID[i], toTotal[i])
 			} else {
 				if err := toNeedValue[i].IsValid(); err == nil {
@@ -1272,7 +1272,7 @@ func (st *StateTransition) handleFsnCall(param *common.FSNCallParam) error {
 
 		// credit the swap take with the from assets
 		for i := 0; i < lnFrom; i++ {
-			if fromUseAsset[i] == true {
+			if fromUseAsset[i] {
 				st.state.AddBalance(st.msg.From(), swap.FromAssetID[i], fromTotal[i])
 				// the owner of the swap already had their balance taken away
 				// in MakeMultiSwapFunc

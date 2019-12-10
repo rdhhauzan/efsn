@@ -1042,7 +1042,7 @@ func (bc *BlockChain) WriteBlockWithState(block *types.Block, receipts []*types.
 	if status == CanonStatTy {
 		bc.insert(block)
 		// (auto) buy ticket when block height changed
-		if common.AutoBuyTicket == true { // if enable
+		if common.AutoBuyTicket { // if enable
 			go func() { // do not block process
 				common.AutoBuyTicketChan <- 1
 			}()
@@ -1213,7 +1213,7 @@ func (bc *BlockChain) insertChain(chain types.Blocks) (int, []interface{}, []*ty
 			return i, events, coalescedLogs, err
 		}
 		// Update the state for ticket selection
-		err = bc.engine.PreProcess(bc, headers[i], state)
+		bc.engine.PreProcess(bc, headers[i], state)
 
 		// Process block using the parent state as reference point.
 		datong.SetHeaders(headers[:i])

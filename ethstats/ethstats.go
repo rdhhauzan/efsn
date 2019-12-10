@@ -93,8 +93,7 @@ func New(url string, ethServ *eth.Ethereum) (*Service, error) {
 		return nil, fmt.Errorf("invalid netstats url: \"%s\", should be nodename:secret@host:port", url)
 	}
 	// Assemble and return the stats service
-	var engine consensus.Engine
-	engine = ethServ.Engine()
+	engine := ethServ.Engine()
 	return &Service{
 		eth:    ethServ,
 		engine: engine,
@@ -573,8 +572,7 @@ func (s *Service) reportHistory(conn *websocket.Conn, list []uint64) error {
 		indexes = append(indexes, list...)
 	} else {
 		// No indexes requested, send back the top ones
-		var head int64
-		head = s.eth.BlockChain().CurrentHeader().Number.Int64()
+		head := s.eth.BlockChain().CurrentHeader().Number.Int64()
 		start := head - historyUpdateRange + 1
 		if start < 0 {
 			start = 0
@@ -587,8 +585,7 @@ func (s *Service) reportHistory(conn *websocket.Conn, list []uint64) error {
 	history := make([]*blockStats, len(indexes))
 	for i, number := range indexes {
 		// Retrieve the next block if it's known to us
-		var block *types.Block
-		block = s.eth.BlockChain().GetBlockByNumber(number)
+		block := s.eth.BlockChain().GetBlockByNumber(number)
 		// If we do have the block, add to the history and continue
 		if block != nil {
 			history[len(history)-1-i] = s.assembleBlockStats(block)

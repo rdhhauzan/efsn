@@ -45,8 +45,6 @@ var (
 
 	errMissingSignature = errors.New("extra-data 65 byte suffix signature missing")
 
-	errUnauthorized = errors.New("unauthorized")
-
 	ErrNoTicket = errors.New("Miner doesn't have ticket")
 )
 
@@ -206,7 +204,7 @@ func SetHeaders(parents []*types.Header) {
 func getParent(chain consensus.ChainReader, header *types.Header, parents []*types.Header) (*types.Header, error) {
 	number := header.Number.Uint64()
 	var parent *types.Header
-	if parents != nil && len(parents) > 0 {
+	if len(parents) > 0 {
 		parent = parents[len(parents)-1]
 	} else {
 		parent = chain.GetHeader(header.ParentHash, number-1)
@@ -922,18 +920,18 @@ func (c *DaTong) PreProcess(chain consensus.ChainReader, header *types.Header, s
 func (dt *DaTong) calcDelayTime(chain consensus.ChainReader, header *types.Header) (time.Duration, error) {
 	list := header.Nonce.Uint64()
 	if list > 0 {
-		return time.Unix(header.Time.Int64(), 0).Sub(time.Now()), nil
+		return time.Until(time.Unix(header.Time.Int64(), 0)), nil
 	}
 
 	// delayTime = ParentTime + (15 - 2) - time.Now
 	parent := chain.GetHeaderByNumber(header.Number.Uint64() - 1)
 	endTime := new(big.Int).Add(header.Time, new(big.Int).SetUint64(list*uint64(delayTimeModifier)+dt.config.Period-2))
-	delayTime := time.Unix(endTime.Int64(), 0).Sub(time.Now())
+	delayTime := time.Until(time.Unix(endTime.Int64(), 0))
 
 	// delay maximum
 	if (new(big.Int).Sub(endTime, header.Time)).Uint64() > maxBlockTime {
 		endTime = new(big.Int).Add(header.Time, new(big.Int).SetUint64(maxBlockTime+dt.config.Period-2+list))
-		delayTime = time.Unix(endTime.Int64(), 0).Sub(time.Now())
+		delayTime = time.Until(time.Unix(endTime.Int64(), 0))
 	}
 	if header.Number.Uint64() > (adjustIntervalBlocks + 1) {
 		// adjust = ( ( parent - gparent ) / 2 - (dt.config.Period) ) / dt.config.Period

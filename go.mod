@@ -3,8 +3,6 @@ module github.com/FusionFoundation/efsn
 go 1.13
 
 require (
-	github.com/Azure/azure-storage-blob-go v0.8.0
-	github.com/Azure/go-autorest/autorest/adal v0.8.0 // indirect
 	github.com/aristanetworks/goarista v0.0.0-20191106175434-873d404c7f40
 	github.com/btcsuite/btcd v0.20.1-beta
 	github.com/cespare/cp v1.1.1
@@ -24,6 +22,7 @@ require (
 	github.com/jackpal/go-nat-pmp v1.0.2
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/karalabe/hid v1.0.0
+	github.com/kr/pretty v0.1.0 // indirect
 	github.com/mattn/go-colorable v0.1.4
 	github.com/mattn/go-runewidth v0.0.6 // indirect
 	github.com/naoina/go-stringutil v0.1.0 // indirect

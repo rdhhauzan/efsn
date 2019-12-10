@@ -1384,7 +1384,7 @@ func (pool *TxPool) validateAddFsnCallTx(tx *types.Transaction) error {
 			}
 			return true
 		})
-		if found == true {
+		if found {
 			return fmt.Errorf("%v has already bought a ticket in txpool", from.String())
 		}
 		if oldTxHash != (common.Hash{}) {
@@ -1569,7 +1569,7 @@ func (pool *TxPool) validateFsnCallTx(tx *types.Transaction) error {
 			end := makeSwapParam.FromEndTime
 			useAsset := start == common.TimeLockNow && end == common.TimeLockForever
 
-			if useAsset == true {
+			if useAsset {
 				if makeSwapParam.FromAssetID == common.SystemAssetID {
 					fsnValue = total
 				} else if state.GetBalance(makeSwapParam.FromAssetID, from).Cmp(total) < 0 {
@@ -1647,7 +1647,7 @@ func (pool *TxPool) validateFsnCallTx(tx *types.Transaction) error {
 		toEnd := swap.ToEndTime
 		toUseAsset := toStart == common.TimeLockNow && toEnd == common.TimeLockForever
 
-		if toUseAsset == true {
+		if toUseAsset {
 			if swap.ToAssetID == common.SystemAssetID {
 				fsnValue = toTotal
 			} else if state.GetBalance(swap.ToAssetID, from).Cmp(toTotal) < 0 {
@@ -1736,7 +1736,7 @@ func (pool *TxPool) validateFsnCallTx(tx *types.Transaction) error {
 			start := makeSwapParam.FromStartTime[i]
 			end := makeSwapParam.FromEndTime[i]
 			useAsset[i] = start == common.TimeLockNow && end == common.TimeLockForever
-			if useAsset[i] == false {
+			if !useAsset[i] {
 				needValue[i] = common.NewTimeLock(&common.TimeLockItem{
 					StartTime: common.MaxUint64(start, timestamp),
 					EndTime:   end,
@@ -1753,7 +1753,7 @@ func (pool *TxPool) validateFsnCallTx(tx *types.Transaction) error {
 		for i := 0; i < ln; i++ {
 			balance := accountBalances[makeSwapParam.FromAssetID[i]]
 			timeLockBalance := accountTimeLockBalances[makeSwapParam.FromAssetID[i]]
-			if useAsset[i] == true {
+			if useAsset[i] {
 				if balance.Cmp(total[i]) < 0 {
 					return fmt.Errorf("not enough from asset")
 				}
@@ -1822,7 +1822,7 @@ func (pool *TxPool) validateFsnCallTx(tx *types.Transaction) error {
 			toStart[i] = swap.ToStartTime[i]
 			toEnd[i] = swap.ToEndTime[i]
 			toUseAsset[i] = toStart[i] == common.TimeLockNow && toEnd[i] == common.TimeLockForever
-			if toUseAsset[i] == false {
+			if !toUseAsset[i] {
 				toNeedValue[i] = common.NewTimeLock(&common.TimeLockItem{
 					StartTime: common.MaxUint64(toStart[i], timestamp),
 					EndTime:   toEnd[i],
@@ -1835,7 +1835,7 @@ func (pool *TxPool) validateFsnCallTx(tx *types.Transaction) error {
 		for i := 0; i < lnTo; i++ {
 			balance := accountBalances[swap.ToAssetID[i]]
 			timeLockBalance := accountTimeLockBalances[swap.ToAssetID[i]]
-			if toUseAsset[i] == true {
+			if toUseAsset[i] {
 				if balance.Cmp(toTotal[i]) < 0 {
 					return fmt.Errorf("not enough from asset")
 				}

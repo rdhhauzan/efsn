@@ -229,9 +229,7 @@ func (hc *HeaderChain) ValidateHeaderChain(chain []*types.Header, checkFreq int)
 		seals[index] = true
 	}
 	headers := make([]*types.Header, len(chain))
-	for i, header := range chain {
-		headers[i] = header
-	}
+	copy(headers, chain)
 	seals[len(seals)-1] = true // Last should always be verified to avoid junk
 
 	// abort, results := hc.engine.VerifyHeaders(hc, chain, seals)

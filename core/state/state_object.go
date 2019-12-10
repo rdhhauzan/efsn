@@ -99,10 +99,10 @@ func (s *stateObject) empty() bool {
 	if len(s.data.TimeLockBalancesVal) > 0 {
 		return false
 	}
-	if bytes.Equal(s.data.CodeHash, emptyCodeHash) == false {
+	if !bytes.Equal(s.data.CodeHash, emptyCodeHash) {
 		return false
 	}
-	if s.address.IsSpecialKeyAddress() == true {
+	if s.address.IsSpecialKeyAddress() {
 		return false
 	}
 	return true
@@ -114,9 +114,7 @@ func (s *stateObject) deepCopyBalancesHash() []common.Hash {
 		return ret
 	}
 
-	for _, v := range s.data.BalancesHash {
-		ret = append(ret, v)
-	}
+	ret = append(ret, s.data.BalancesHash...)
 
 	return ret
 }
@@ -141,9 +139,7 @@ func (s *stateObject) deepCopyTimeLockBalancesHash() []common.Hash {
 		return ret
 	}
 
-	for _, v := range s.data.TimeLockBalancesHash {
-		ret = append(ret, v)
-	}
+	ret = append(ret, s.data.TimeLockBalancesHash...)
 
 	return ret
 }

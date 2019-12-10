@@ -18,12 +18,9 @@ package eth
 
 import (
 	"math/big"
-	"os"
-	"os/user"
 	"time"
 
 	"github.com/FusionFoundation/efsn/common"
-	"github.com/FusionFoundation/efsn/common/hexutil"
 	"github.com/FusionFoundation/efsn/core"
 	"github.com/FusionFoundation/efsn/eth/downloader"
 	"github.com/FusionFoundation/efsn/eth/gasprice"
@@ -49,16 +46,7 @@ var DefaultConfig = Config{
 	},
 }
 
-func init() {
-	home := os.Getenv("HOME")
-	if home == "" {
-		if user, err := user.Current(); err == nil {
-			home = user.HomeDir
-		}
-	}
-}
-
-//go:generate gencodec -type Config -field-override configMarshaling -formats toml -out gen_config.go
+//go:generate gencodec -type Config -formats toml -out gen_config.go
 
 type Config struct {
 	// The genesis block, which is inserted if the database is empty.
@@ -103,8 +91,4 @@ type Config struct {
 	EWASMInterpreter string
 	// Type of the EVM interpreter ("" for default)
 	EVMInterpreter string
-}
-
-type configMarshaling struct {
-	MinerExtraData hexutil.Bytes
 }

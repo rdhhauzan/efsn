@@ -269,7 +269,6 @@ func (c *TimeLockContract) parseParams(pos uint64, hasToAddress, hasStartEndTime
 		param.start = c.getBigInt(pos).Uint64()
 		pos += 32
 		param.end = c.getBigInt(pos).Uint64()
-		pos += 32
 	}
 
 	// adjust

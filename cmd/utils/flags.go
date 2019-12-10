@@ -984,10 +984,10 @@ func SetEthConfig(ctx *cli.Context, stack *node.Node, cfg *eth.Config) {
 
 	if ctx.GlobalIsSet(SyncModeFlag.Name) {
 		cfg.SyncMode = *GlobalTextMarshaler(ctx, SyncModeFlag.Name).(*downloader.SyncMode)
-		if cfg.SyncMode == downloader.FastSync && downloader.FastSyncSupported() == false {
+		if cfg.SyncMode == downloader.FastSync && !downloader.FastSyncSupported() {
 			log.Warn("SetEthConfig: 'fast' sync mode is not supported, change to 'full' sync mode.")
 			cfg.SyncMode = downloader.FullSync
-		} else if cfg.SyncMode == downloader.LightSync && downloader.LightSyncSupported() == false {
+		} else if cfg.SyncMode == downloader.LightSync && !downloader.LightSyncSupported() {
 			log.Warn("SetEthConfig: 'light' sync mode is not supported, change to 'full' sync mode.")
 			cfg.SyncMode = downloader.FullSync
 		}
@@ -1002,14 +1002,15 @@ func SetEthConfig(ctx *cli.Context, stack *node.Node, cfg *eth.Config) {
 	cfg.DatabaseHandles = makeDatabaseHandles()
 
 	gcmode := ctx.GlobalString(GCModeFlag.Name)
-	if gcmode != "full" && gcmode != "archive" {
+	gcmodeArchive := "archive"
+	if gcmode != "full" && gcmode != gcmodeArchive {
 		Fatalf("--%s must be either 'full' or 'archive'", GCModeFlag.Name)
 	}
-	if gcmode == "full" && downloader.FullGcModeSupported() == false {
+	if gcmode == "full" && !downloader.FullGcModeSupported() {
 		log.Warn("SetEthConfig: 'full' gcmode is not supported, change to 'archive' gcmode.")
-		gcmode = "archive"
+		gcmode = gcmodeArchive
 	}
-	cfg.NoPruning = gcmode == "archive"
+	cfg.NoPruning = gcmode == gcmodeArchive
 
 	if ctx.GlobalIsSet(CacheFlag.Name) || ctx.GlobalIsSet(CacheGCFlag.Name) {
 		cfg.TrieCache = ctx.GlobalInt(CacheFlag.Name) * ctx.GlobalInt(CacheGCFlag.Name) / 100
@@ -1175,15 +1176,16 @@ func MakeChain(ctx *cli.Context, stack *node.Node) (chain *core.BlockChain, chai
 	}
 	var engine consensus.Engine
 	gcmode := ctx.GlobalString(GCModeFlag.Name)
-	if gcmode != "full" && gcmode != "archive" {
+	gcmodeArchive := "archive"
+	if gcmode != "full" && gcmode != gcmodeArchive {
 		Fatalf("--%s must be either 'full' or 'archive'", GCModeFlag.Name)
 	}
-	if gcmode == "full" && downloader.FullGcModeSupported() == false {
+	if gcmode == "full" && !downloader.FullGcModeSupported() {
 		log.Warn("MakeChain: 'full' gcmode is not supported, change to 'archive' gcmode.")
-		gcmode = "full"
+		gcmode = gcmodeArchive
 	}
 	cache := &core.CacheConfig{
-		Disabled:      gcmode == "archive",
+		Disabled:      gcmode == gcmodeArchive,
 		TrieNodeLimit: eth.DefaultConfig.TrieCache,
 		TrieTimeLimit: eth.DefaultConfig.TrieTimeout,
 	}

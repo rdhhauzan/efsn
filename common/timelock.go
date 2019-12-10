@@ -95,13 +95,13 @@ const (
 
 func (z *TimeLockItem) Add(x *TimeLockItem) ([]*TimeLockItem, TailFlag) {
 	if x.EndTime < z.StartTime {
-		if x.CanMerge(z) == true {
+		if x.CanMerge(z) {
 			return []*TimeLockItem{x.Merge(z)}, TailInFirst
 		}
 		return []*TimeLockItem{x, z}, TailInFirst
 	}
 	if z.EndTime < x.StartTime {
-		if z.CanMerge(x) == true {
+		if z.CanMerge(x) {
 			return []*TimeLockItem{z.Merge(x)}, TailInSecond
 		}
 		return []*TimeLockItem{z, x}, TailInSecond
@@ -354,7 +354,7 @@ func (z *TimeLock) Cmp(x *TimeLock) int {
 	if x == nil || len(x.Items) != 1 {
 		panic("Cmp Just Support One TimeLockItem")
 	}
-	if z.IsEmpty() == true {
+	if z.IsEmpty() {
 		return -1
 	}
 	if err := x.IsValid(); err != nil {
@@ -424,7 +424,7 @@ func (z *TimeLock) IsValid() error {
 			return fmt.Errorf("TimeLock is invalid, index:%v err:%v", i, err)
 		}
 		if prev != nil {
-			if prev.EndTime >= next.StartTime || prev.CanMerge(next) == true {
+			if prev.EndTime >= next.StartTime || prev.CanMerge(next) {
 				return fmt.Errorf("TimeLock is invalid, index:%v, prev:%v, next:%v", i, prev, next)
 			}
 		}

@@ -43,7 +43,7 @@ func verify(t *testing.T, jsondata, calldata string, exp []interface{}) {
 		t.Fatal(err)
 	}
 
-	data, err := method.Inputs.UnpackValues(argdata)
+	data, _ := method.Inputs.UnpackValues(argdata)
 
 	if len(data) != len(exp) {
 		t.Fatalf("Mismatched length, expected %d, got %d", len(exp), len(data))
