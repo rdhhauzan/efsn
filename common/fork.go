@@ -13,11 +13,13 @@ var (
 // mainnet fork heights
 var MAINNET_FORKS = []uint64{
 	739500, // fork 1
+	//1250000, // fork 2 (also enable Constantinople)
 }
 
 // testnet fork heights
 var TESTNET_FORKS = []uint64{
 	534500, // fork 1
+	//1180000, // fork 2 (also enable Constantinople)
 }
 
 const (
