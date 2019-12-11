@@ -1,6 +1,6 @@
 language: go
 go_import_path: github.com/FusionFoundation/efsn
-sudo: false
+os: linux
 jobs:
   include:
     # This builder only tests code linters on latest version of Go
