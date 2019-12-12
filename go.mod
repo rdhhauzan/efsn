@@ -24,6 +24,7 @@ require (
 	github.com/karalabe/hid v1.0.0
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/mattn/go-colorable v0.1.4
+	github.com/mattn/go-isatty v0.0.8
 	github.com/mattn/go-runewidth v0.0.6 // indirect
 	github.com/naoina/go-stringutil v0.1.0 // indirect
 	github.com/naoina/toml v0.1.1
