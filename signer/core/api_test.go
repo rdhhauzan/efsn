@@ -125,7 +125,7 @@ func setup(t *testing.T) (*SignerAPI, chan string) {
 
 	controller := make(chan string, 10)
 
-	db, err := NewAbiDBFromFile("../../cmd/clef/4byte.json")
+	db, err := NewAbiDBFromFile("testdata/4byte.json")
 	if err != nil {
 		utils.Fatalf(err.Error())
 	}
