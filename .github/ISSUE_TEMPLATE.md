@@ -1,26 +1,24 @@
-Hi there,
+<!---
 
-please note that this is an issue tracker reserved for bug reports and feature requests.
+Steps before creating an issue: 
 
-For general questions please use the gitter channel or the Ethereum stack exchange at https://ethereum.stackexchange.com.
+1. I've read the documentation.
+2. I was looking for an solution on stackoverflow or something else.
+3. I was looking for an identical issue.
 
-#### System information
+-->
 
-Geth version: `geth version`
-OS & Version: Windows/Linux/OSX
-Commit hash : (if `develop`)
+#### Expected behavior
 
-#### Expected behaviour
+#### Actual behavior
 
+#### Steps to reproduce the behavior
 
-#### Actual behaviour
+1. [First step]
+2. [Second step]
+3. [and so on...]
 
+#### Logs
 
-#### Steps to reproduce the behaviour
-
-
-#### Backtrace
-
-````
-[backtrace]
-````
+#### Versions
+[NPM, Node, Web3.js, OS, device...]

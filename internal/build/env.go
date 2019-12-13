@@ -132,6 +132,9 @@ func getDate(commit string) string {
 	if commit == "" {
 		return ""
 	}
+	if info, err := os.Stat(".git/objects"); !(err == nil && info.IsDir()) {
+		return ""
+	}
 	out := RunGit("show", "-s", "--format=%ct", commit)
 	if out == "" {
 		return ""
