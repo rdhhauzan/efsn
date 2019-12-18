@@ -3,10 +3,10 @@ go_import_path: github.com/FusionFoundation/efsn
 os: linux
 jobs:
   include:
-    # This builder only tests code linters on latest version of Go
+    # This builder only tests code linters
     - stage: lint
       os: linux
-      dist: xenial
+      dist: bionic
       go: 1.13.x
       env:
         - lint
@@ -17,8 +17,8 @@ jobs:
 
     - stage: build
       os: linux
-      dist: xenial
-      go: 1.11.x
+      dist: bionic
+      go: 1.12.x
       env:
         - GO111MODULE=on
         - GOPROXY=https://goproxy.io
@@ -28,10 +28,9 @@ jobs:
 
     - stage: build
       os: linux
-      dist: xenial
-      go: 1.12.x
+      dist: bionic
+      go: 1.13.x
       env:
-        - GO111MODULE=on
         - GOPROXY=https://goproxy.io
       script:
         - go run build/ci.go install
@@ -41,8 +40,8 @@ jobs:
     - stage: build
       os: linux
       arch: amd64
-      dist: xenial
-      go: 1.13.x
+      dist: bionic
+      go: master
       env:
         - GOPROXY=https://goproxy.io
       script:
@@ -52,8 +51,8 @@ jobs:
     - stage: build
       if: type = pull_request
       os: linux
-      arch: arm64
-      dist: xenial
+      arch: amd64
+      dist: bionic
       go: 1.13.x
       env:
         - GOPROXY=https://goproxy.io
