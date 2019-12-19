@@ -4,11 +4,15 @@
 !.git/refs/heads
 
 **/*_test.go
-**/*.swp
+**/testdata
 
-build/_workspace
-build/_bin
-tests/testdata
+**/*.swp
+**/*.orig
+**/*.rej
+
+build
+!build/ci.go
+!build/env.sh
 
 QuickNodeSetup
 cscope.*
