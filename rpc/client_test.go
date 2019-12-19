@@ -40,11 +40,11 @@ func TestClientRequest(t *testing.T) {
 	client := DialInProc(server)
 	defer client.Close()
 
-	var resp Result
-	if err := client.Call(&resp, "test_echo", "hello", 10, &Args{"world"}); err != nil {
+	var resp echoResult
+	if err := client.Call(&resp, "test_echo", "hello", 10, &echoArgs{"world"}); err != nil {
 		t.Fatal(err)
 	}
-	if !reflect.DeepEqual(resp, Result{"hello", 10, &Args{"world"}}) {
+	if !reflect.DeepEqual(resp, echoResult{"hello", 10, &echoArgs{"world"}}) {
 		t.Errorf("incorrect result %#v", resp)
 	}
 }
@@ -58,13 +58,13 @@ func TestClientBatchRequest(t *testing.T) {
 	batch := []BatchElem{
 		{
 			Method: "test_echo",
-			Args:   []interface{}{"hello", 10, &Args{"world"}},
-			Result: new(Result),
+			Args:   []interface{}{"hello", 10, &echoArgs{"world"}},
+			Result: new(echoResult),
 		},
 		{
 			Method: "test_echo",
-			Args:   []interface{}{"hello2", 11, &Args{"world"}},
-			Result: new(Result),
+			Args:   []interface{}{"hello2", 11, &echoArgs{"world"}},
+			Result: new(echoResult),
 		},
 		{
 			Method: "no_such_method",
@@ -78,13 +78,13 @@ func TestClientBatchRequest(t *testing.T) {
 	wantResult := []BatchElem{
 		{
 			Method: "test_echo",
-			Args:   []interface{}{"hello", 10, &Args{"world"}},
-			Result: &Result{"hello", 10, &Args{"world"}},
+			Args:   []interface{}{"hello", 10, &echoArgs{"world"}},
+			Result: &echoResult{"hello", 10, &echoArgs{"world"}},
 		},
 		{
 			Method: "test_echo",
-			Args:   []interface{}{"hello2", 11, &Args{"world"}},
-			Result: &Result{"hello2", 11, &Args{"world"}},
+			Args:   []interface{}{"hello2", 11, &echoArgs{"world"}},
+			Result: &echoResult{"hello2", 11, &echoArgs{"world"}},
 		},
 		{
 			Method: "no_such_method",
@@ -104,7 +104,7 @@ func TestClientNotify(t *testing.T) {
 	client := DialInProc(server)
 	defer client.Close()
 
-	if err := client.Notify(context.Background(), "test_echo", "hello", 10, &Args{"world"}); err != nil {
+	if err := client.Notify(context.Background(), "test_echo", "hello", 10, &echoArgs{"world"}); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -329,6 +329,60 @@ func TestClientCloseUnsubscribeRace(t *testing.T) {
 	}
 }
 
+// This test checks that Client doesn't lock up when a single subscriber
+// doesn't read subscription events.
+func TestClientNotificationStorm(t *testing.T) {
+	server := newTestServer()
+	defer server.Stop()
+
+	doTest := func(count int, wantError bool) {
+		client := DialInProc(server)
+		defer client.Close()
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		// Subscribe on the server. It will start sending many notifications
+		// very quickly.
+		nc := make(chan int)
+		sub, err := client.Subscribe(ctx, "nftest", nc, "someSubscription", count, 0)
+		if err != nil {
+			t.Fatal("can't subscribe:", err)
+		}
+		defer sub.Unsubscribe()
+
+		// Process each notification, try to run a call in between each of them.
+		for i := 0; i < count; i++ {
+			select {
+			case val := <-nc:
+				if val != i {
+					t.Fatalf("(%d/%d) unexpected value %d", i, count, val)
+				}
+			case err := <-sub.Err():
+				if wantError && err != ErrSubscriptionQueueOverflow {
+					t.Fatalf("(%d/%d) got error %q, want %q", i, count, err, ErrSubscriptionQueueOverflow)
+				} else if !wantError {
+					t.Fatalf("(%d/%d) got unexpected error %q", i, count, err)
+				}
+				return
+			}
+			var r int
+			err := client.CallContext(ctx, &r, "nftest_echo", i)
+			if err != nil {
+				if !wantError {
+					t.Fatalf("(%d/%d) call error: %v", i, count, err)
+				}
+				return
+			}
+		}
+		if wantError {
+			t.Fatalf("didn't get expected error")
+		}
+	}
+
+	doTest(8000, false)
+	doTest(23000, true)
+}
+
 func TestClientHTTP(t *testing.T) {
 	server := newTestServer()
 	defer server.Stop()
@@ -339,9 +393,9 @@ func TestClientHTTP(t *testing.T) {
 
 	// Launch concurrent requests.
 	var (
-		results    = make([]Result, 100)
+		results    = make([]echoResult, 100)
 		errc       = make(chan error)
-		wantResult = Result{"a", 1, new(Args)}
+		wantResult = echoResult{"a", 1, new(echoArgs)}
 	)
 	defer client.Close()
 	for i := range results {
@@ -396,7 +450,7 @@ func TestClientReconnect(t *testing.T) {
 	}
 
 	// Perform a call. This should work because the server is up.
-	var resp Result
+	var resp echoResult
 	if err := client.CallContext(ctx, &resp, "test_echo", "", 1, nil); err != nil {
 		t.Fatal(err)
 	}
@@ -424,7 +478,7 @@ func TestClientReconnect(t *testing.T) {
 	for i := 0; i < cap(errors); i++ {
 		go func() {
 			<-start
-			var resp Result
+			var resp echoResult
 			errors <- client.CallContext(ctx, &resp, "test_echo", "", 3, nil)
 		}()
 	}
