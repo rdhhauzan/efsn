@@ -76,4 +76,3 @@ jobs:
         - ulimit -n
         - unset -f cd # workaround for https://github.com/travis-ci/travis-ci/issues/8703
         - go run build/ci.go install
-        - go run build/ci.go test -coverage $TEST_PACKAGES

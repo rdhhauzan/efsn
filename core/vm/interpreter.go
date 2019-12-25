@@ -23,6 +23,7 @@ import (
 
 	"github.com/FusionFoundation/efsn/common"
 	"github.com/FusionFoundation/efsn/common/math"
+	"github.com/FusionFoundation/efsn/log"
 )
 
 // Config are the configuration options for the Interpreter
@@ -104,6 +105,13 @@ func NewEVMInterpreter(evm *EVM, cfg Config) *EVMInterpreter {
 			jt = homesteadInstructionSet
 		default:
 			jt = frontierInstructionSet
+		}
+		for i, eip := range cfg.ExtraEips {
+			if err := EnableEIP(eip, &jt); err != nil {
+				// Disable it, so caller can check if it's activated or not
+				cfg.ExtraEips = append(cfg.ExtraEips[:i], cfg.ExtraEips[i+1:]...)
+				log.Error("EIP activation failed", "eip", eip, "error", err)
+			}
 		}
 		cfg.JumpTable = jt
 	}
