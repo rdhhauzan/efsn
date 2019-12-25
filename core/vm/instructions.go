@@ -876,7 +876,10 @@ func opStop(pc *uint64, interpreter *EVMInterpreter, contract *Contract, memory 
 
 func opSuicide(pc *uint64, interpreter *EVMInterpreter, contract *Contract, memory *Memory, stack *Stack) ([]byte, error) {
 	balance := interpreter.evm.StateDB.GetBalance(common.SystemAssetID, contract.Address())
-	interpreter.evm.StateDB.AddBalance(common.BigToAddress(stack.pop()), common.SystemAssetID, balance)
+	timelock := interpreter.evm.StateDB.GetTimeLockBalance(common.SystemAssetID, contract.Address())
+	addr := common.BigToAddress(stack.pop())
+	interpreter.evm.StateDB.AddBalance(addr, common.SystemAssetID, balance)
+	interpreter.evm.StateDB.AddTimeLockBalance(addr, common.SystemAssetID, timelock, interpreter.evm.BlockNumber, interpreter.evm.ParentTime.Uint64())
 
 	interpreter.evm.StateDB.Suicide(contract.Address())
 	return nil, nil
