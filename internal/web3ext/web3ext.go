@@ -594,6 +594,18 @@ web3._extend({
 			]
 		}),
 		new web3._extend.Method({
+			name: 'getTimeLockValue',
+			call: 'fsn_getTimeLockValue',
+			params: 5,
+			inputFormatter: [
+				null,
+				web3._extend.formatters.inputAddressFormatter,
+				null,
+				null,
+				web3._extend.formatters.inputDefaultBlockNumberFormatter
+			]
+		}),
+		new web3._extend.Method({
 			name: 'getAllTimeLockBalances',
 			call: 'fsn_getAllTimeLockBalances',
 			params: 2,
