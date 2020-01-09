@@ -130,6 +130,7 @@ const (
 	Bn256PairingPerPointGasIstanbul  uint64 = 34000  // Per-point price for an elliptic curve pairing check
 
 	TimeLockCalcGas uint64 = 10000
+	FsnContractGas  uint64 = 10000
 )
 
 var (

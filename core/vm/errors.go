@@ -28,5 +28,8 @@ var (
 	ErrContractAddressCollision = errors.New("contract address collision")
 	ErrNoCompatibleInterpreter  = errors.New("no compatible interpreter")
 	ErrMustCallByContract       = errors.New("must call by contract")
+	ErrForbidCallByContract     = errors.New("forbid call by contract")
 	ErrForbidDelegateCall       = errors.New("forbid delegate call")
+	ErrDataError                = errors.New("data error")
+	ErrToAddressMustBeContract  = errors.New("receiver address must be contract")
 )

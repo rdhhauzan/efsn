@@ -38,6 +38,10 @@ type (
 	// GetHashFunc returns the n'th block hash in the blockchain
 	// and is used by the BLOCKHASH EVM op code.
 	GetHashFunc func(uint64) common.Hash
+	// CanTransferTimeLockFunc
+	CanTransferTimeLockFunc func(db StateDB, addr common.Address, p *common.TransferTimeLockParam) bool
+	// TransferTimeLockFunc
+	TransferTimeLockFunc func(db StateDB, sender, recipient common.Address, p *common.TransferTimeLockParam)
 )
 
 func getPrecompiledContracts(evm *EVM, codeAddr *common.Address, contract *Contract) PrecompiledContract {
@@ -46,6 +50,9 @@ func getPrecompiledContracts(evm *EVM, codeAddr *common.Address, contract *Contr
 	}
 	precompiles := PrecompiledContractsHomestead
 	if evm.chainRules.IsConstantinople {
+		if *codeAddr == FSNContractAddress {
+			return NewFSNContract(evm, contract)
+		}
 		if *codeAddr == TimeLockContractAddress {
 			return NewTimeLockContract(evm, contract)
 		}
@@ -88,6 +95,9 @@ type Context struct {
 	Transfer TransferFunc
 	// GetHash returns the hash corresponding to n
 	GetHash GetHashFunc
+
+	CanTransferTimeLock CanTransferTimeLockFunc
+	TransferTimeLock    TransferTimeLockFunc
 
 	// Message information
 	Origin   common.Address // Provides information for ORIGIN
@@ -205,9 +215,35 @@ func (evm *EVM) Call(caller ContractRef, addr common.Address, input []byte, gas 
 	if evm.depth > int(params.CallCreateDepth) {
 		return nil, gas, ErrDepth
 	}
-	// Fail if we're trying to transfer more than the available balance
-	if !evm.Context.CanTransfer(evm.StateDB, caller.Address(), value) {
-		return nil, gas, ErrInsufficientBalance
+
+	isTransferTimeLock := false
+	p := &common.TransferTimeLockParam{}
+	if common.IsReceiveAssetPayableTx(evm.BlockNumber, input) {
+		_, ok := caller.(*Contract)
+		if ok { // prvent input data from being modified
+			return nil, gas, ErrForbidCallByContract
+		}
+		if evm.StateDB.GetCodeSize(addr) == 0 {
+			return nil, gas, ErrToAddressMustBeContract
+		}
+		err = common.ParseReceiveAssetPayableTxInput(p, input, evm.Time.Uint64())
+		if err != nil {
+			return nil, gas, err
+		}
+		isTransferTimeLock = true
+		p.Value = value
+		p.BlockNumber = evm.BlockNumber
+	}
+
+	if isTransferTimeLock {
+		if !evm.Context.CanTransferTimeLock(evm.StateDB, caller.Address(), p) {
+			return nil, gas, ErrInsufficientBalance
+		}
+	} else {
+		// Fail if we're trying to transfer more than the available balance
+		if !evm.Context.CanTransfer(evm.StateDB, caller.Address(), value) {
+			return nil, gas, ErrInsufficientBalance
+		}
 	}
 
 	var (
@@ -226,7 +262,11 @@ func (evm *EVM) Call(caller ContractRef, addr common.Address, input []byte, gas 
 		}
 		evm.StateDB.CreateAccount(addr)
 	}
-	evm.Transfer(evm.StateDB, caller.Address(), to.Address(), value)
+	if isTransferTimeLock {
+		evm.TransferTimeLock(evm.StateDB, caller.Address(), to.Address(), p)
+	} else {
+		evm.Transfer(evm.StateDB, caller.Address(), to.Address(), value)
+	}
 	// Initialise a new contract and set the code that is to be used by the EVM.
 	// The contract is a scoped environment for this execution context only.
 	contract := NewContract(caller, to, value, gas)
@@ -309,6 +349,10 @@ func (evm *EVM) DelegateCall(caller ContractRef, addr common.Address, input []by
 	// Fail if we're trying to execute above the call depth limit
 	if evm.depth > int(params.CallCreateDepth) {
 		return nil, gas, ErrDepth
+	}
+	// delegate call is forbidden for security reason
+	if caller.Address() == FSNContractAddress {
+		return nil, gas, ErrForbidDelegateCall
 	}
 
 	var (
