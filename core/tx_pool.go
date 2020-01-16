@@ -1435,6 +1435,9 @@ func (pool *TxPool) validateFsnCallTx(tx *types.Transaction) error {
 		return nil
 	}
 
+	currBlockHeader := pool.chain.CurrentBlock().Header()
+	nextBlockNumber := new(big.Int).Add(currBlockHeader.Number, big.NewInt(1))
+
 	state := pool.currentState
 	height := common.BigMaxUint64
 	timestamp := uint64(time.Now().Unix())
@@ -1494,8 +1497,11 @@ func (pool *TxPool) validateFsnCallTx(tx *types.Transaction) error {
 
 		start := timeLockParam.StartTime
 		end := timeLockParam.EndTime
+		if start < timestamp {
+			start = timestamp
+		}
 		needValue := common.NewTimeLock(&common.TimeLockItem{
-			StartTime: common.MaxUint64(start, timestamp),
+			StartTime: start,
 			EndTime:   end,
 			Value:     new(big.Int).SetBytes(timeLockParam.Value.Bytes()),
 		})
@@ -1516,6 +1522,19 @@ func (pool *TxPool) validateFsnCallTx(tx *types.Transaction) error {
 		case common.TimeLockToAsset:
 			if state.GetTimeLockBalance(timeLockParam.AssetID, from).Cmp(needValue) < 0 {
 				return fmt.Errorf("TimeLockToAsset: not enough time lock balance")
+			}
+		case common.SmartTransfer:
+			if !common.IsSmartTransferEnabled(nextBlockNumber) {
+				return fmt.Errorf("SendTimeLock not enabled")
+			}
+			timeLockBalance := state.GetTimeLockBalance(timeLockParam.AssetID, from)
+			if timeLockBalance.Cmp(needValue) < 0 {
+				timeLockValue := timeLockBalance.GetSpendableValue(start, end)
+				assetBalance := state.GetBalance(timeLockParam.AssetID, from)
+				if new(big.Int).Add(timeLockValue, assetBalance).Cmp(timeLockParam.Value) < 0 {
+					return fmt.Errorf("SendTimeLock: not enough balance")
+				}
+				fsnValue = new(big.Int).Sub(timeLockParam.Value, timeLockValue)
 			}
 		}
 
