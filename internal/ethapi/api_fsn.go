@@ -94,6 +94,9 @@ func (s *PublicFusionAPI) GetTimeLockValue(ctx context.Context, assetID common.H
 	if endTime == 0 {
 		endTime = common.TimeLockForever
 	}
+	if startTime > endTime {
+		return "0", fmt.Errorf("wrong time range, end time < start time or now")
+	}
 	return b.GetSpendableValue(startTime, endTime).String(), nil
 }
 
