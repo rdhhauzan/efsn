@@ -1406,6 +1406,8 @@ func (pool *TxPool) validateReceiveAssetPayableTx(tx *types.Transaction, from co
 	}
 	timestamp := uint64(time.Now().Unix())
 	p := &common.TransferTimeLockParam{}
+	// use `timestamp+600` here to ensure timelock tx with minimum lifetime of 10 minutes,
+	// that is endtime of timelock must be greater than or equal to `now + 600 seconds`.
 	if err := common.ParseReceiveAssetPayableTxInput(p, input, timestamp+600); err != nil {
 		return err
 	}
