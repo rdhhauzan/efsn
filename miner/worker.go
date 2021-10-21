@@ -891,10 +891,10 @@ func (w *worker) commitNewWork(interrupt *int32, noempty bool, timestamp int64) 
 		misc.ApplyDAOHardFork(env.state)
 	}
 
+	// Create an empty block based on temporary copied state for
+	// sealing in advance without waiting block execution finished.
 	if !noempty {
-		// Create an empty block based on temporary copied state for sealing in advance without waiting block
-		// execution finished.
-		//w.commit(nil, nil, false, tstart)
+		w.commit(nil, nil, false, tstart)
 	}
 
 	// Fill the block with all available pending transactions.
@@ -904,7 +904,7 @@ func (w *worker) commitNewWork(interrupt *int32, noempty bool, timestamp int64) 
 		return
 	}
 	// Short circuit if there is no available pending transactions
-	if noempty && len(pending) == 0 {
+	if len(pending) == 0 {
 		w.updateSnapshot()
 		return
 	}
