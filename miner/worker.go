@@ -809,9 +809,9 @@ func (w *worker) commitTransactions(txs *types.TransactionsByPriceAndNonce, coin
 
 // commitNewWork generates several new sealing tasks based on the parent block.
 func (w *worker) commitNewWork(interrupt *int32, noempty bool, timestamp int64) {
-	if w.isRunning() == false {
-		return
-	}
+	//if w.isRunning() == false {
+	//	return
+	//}
 
 	w.mu.RLock()
 	defer w.mu.RUnlock()
