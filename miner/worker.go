@@ -419,25 +419,25 @@ func (w *worker) mainLoop() {
 	defer w.chainHeadSub.Unsubscribe()
 	defer w.chainSideSub.Unsubscribe()
 
-	clearPending := func(block *types.Block) {
-		if block.Coinbase() == w.coinbase {
-			w.pendingMu.Lock()
-			for h, t := range w.pendingTasks {
-				if t.block.ParentHash() == block.ParentHash() {
-					delete(w.pendingTasks, h)
-				}
-			}
-			w.pendingMu.Unlock()
-		}
-	}
+	//clearPending := func(block *types.Block) {
+	//	if block.Coinbase() == w.coinbase {
+	//		w.pendingMu.Lock()
+	//		for h, t := range w.pendingTasks {
+	//			if t.block.ParentHash() == block.ParentHash() {
+	//				delete(w.pendingTasks, h)
+	//			}
+	//		}
+	//		w.pendingMu.Unlock()
+	//	}
+	//}
 
 	for {
 		select {
 		case req := <-w.newWorkCh:
 			w.commitNewWork(req.interrupt, req.noempty, req.timestamp)
 
-		case ev := <-w.chainSideCh:
-			clearPending(ev.Block)
+		//case ev := <-w.chainSideCh:
+		//	clearPending(ev.Block)
 
 		case ev := <-w.txsCh:
 			// Apply transactions to the pending state if we're not mining.
