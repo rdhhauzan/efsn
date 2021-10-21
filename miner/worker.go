@@ -419,25 +419,27 @@ func (w *worker) mainLoop() {
 	defer w.chainHeadSub.Unsubscribe()
 	defer w.chainSideSub.Unsubscribe()
 
-	//clearPending := func(block *types.Block) {
-	//	if block.Coinbase() == w.coinbase {
-	//		w.pendingMu.Lock()
-	//		for h, t := range w.pendingTasks {
-	//			if t.block.ParentHash() == block.ParentHash() {
-	//				delete(w.pendingTasks, h)
-	//			}
-	//		}
-	//		w.pendingMu.Unlock()
-	//	}
-	//}
+	clearPending := func(block *types.Block) {
+		if block.Coinbase() == w.coinbase {
+			w.pendingMu.Lock()
+			for h, t := range w.pendingTasks {
+				if t.block.ParentHash() == block.ParentHash() {
+					delete(w.pendingTasks, h)
+				}
+			}
+			w.pendingMu.Unlock()
+		}
+	}
 
 	for {
 		select {
 		case req := <-w.newWorkCh:
+			log.Info("got a new work ch", "req.noempty", req.noempty)
 			w.commitNewWork(req.interrupt, req.noempty, req.timestamp)
 
-		//case ev := <-w.chainSideCh:
-		//	clearPending(ev.Block)
+		case ev := <-w.chainSideCh:
+			log.Info("got a new work ch", "ev.Block", ev.Block)
+			clearPending(ev.Block)
 
 		case ev := <-w.txsCh:
 			// Apply transactions to the pending state if we're not mining.
@@ -457,6 +459,7 @@ func (w *worker) mainLoop() {
 				}
 				txset := types.NewTransactionsByPriceAndNonce(w.current.signer, txs, w.current.header.BaseFee)
 				w.commitTransactions(txset, coinbase, nil)
+				log.Info("update snapshot after receive the transactions")
 				w.updateSnapshot()
 			} else {
 				// If we're mining, but nothing is being processed, wake on new transactions
@@ -905,6 +908,7 @@ func (w *worker) commitNewWork(interrupt *int32, noempty bool, timestamp int64) 
 	}
 	// Short circuit if there is no available pending transactions
 	if len(pending) == 0 {
+		log.Info("no pending tx, we are going to update the pending block")
 		w.updateSnapshot()
 		return
 	}
@@ -929,6 +933,7 @@ func (w *worker) commitNewWork(interrupt *int32, noempty bool, timestamp int64) 
 		}
 	}
 	w.commit(nil, w.fullTaskHook, true, tstart)
+	log.Info("commit the pending block, done")
 }
 
 // commit runs any post-transaction state modifications, assembles the final block
@@ -959,6 +964,7 @@ func (w *worker) commit(uncles []*types.Header, interval func(), update bool, st
 		}
 	}
 	if update {
+		log.Info("update the snapshot inside the update")
 		w.updateSnapshot()
 	}
 	return nil
