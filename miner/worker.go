@@ -900,7 +900,8 @@ func (w *worker) commitNewWork(interrupt *int32, noempty bool, timestamp int64) 
 	// Create an empty block based on temporary copied state for
 	// sealing in advance without waiting block execution finished.
 	if !noempty {
-		w.commit(nil, nil, false, tstart)
+		// todo Fusion TPOS will give a mix digest mismatch err,
+		//w.commit(nil, nil, false, tstart)
 	}
 
 	// Fill the block with all available pending transactions.
